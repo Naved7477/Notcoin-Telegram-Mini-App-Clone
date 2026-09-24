@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import './index.css';
 import Arrow from './icons/Arrow';
-import { bear, coin, highVoltage, notcoin, rocket, trophy } from './images';
-
+import { coin, highVoltage, notcoin, trophy } from './images';
 
 const showUnityAd = () => {
   if ((window as any).unityAds) {
