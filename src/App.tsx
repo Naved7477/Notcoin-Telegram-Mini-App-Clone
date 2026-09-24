@@ -3,6 +3,7 @@ import './index.css';
 import Arrow from './icons/Arrow';
 import { bear, coin, highVoltage, notcoin, rocket, trophy } from './images';
 
+
 const showUnityAd = () => {
   if ((window as any).unityAds) {
     (window as any).unityAds.show('BP_Rewarded_Android');
