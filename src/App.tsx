@@ -78,17 +78,17 @@ const App = () => {
               <div className="w-full bg-[#fad258] py-4 rounded-2xl flex justify-around">
                 <button className="flex flex-col items-center gap-1">
                   <img src={bear} width={24} height={24} alt="High Voltage" />
-                  <span>Frens</span>
+                  <span>Shop</span>
                 </button>
                 <div className="h-[48px] w-[2px] bg-[#fddb6d]"></div>
                 <button className="flex flex-col items-center gap-1">
                   <img src={coin} width={24} height={24} alt="High Voltage" />
-                  <span>Earn</span>
+                  <span>Watch ads</span>
                 </button>
                 <div className="h-[48px] w-[2px] bg-[#fddb6d]"></div>
                 <button className="flex flex-col items-center gap-1">
                   <img src={rocket} width={24} height={24} alt="High Voltage" />
-                  <span>Boosts</span>
+                  <span>Withdrawal</span>
                 </button>
               </div>
             </div>
