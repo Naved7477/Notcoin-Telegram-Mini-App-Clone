@@ -18,7 +18,7 @@ const showUnityAd = () => {
 };
 
 const App = () => {
-  const [points, setPoints] = useState(29857775);
+  const [points, setPoints] = useState(0);
   const [energy, setEnergy] = useState(2532);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   const pointsToAdd = 12;
