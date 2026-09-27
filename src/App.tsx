@@ -208,4 +208,3 @@ const App = () => {
                 <div className="text-xs opacity-40 mt-2">
                   Need support? <br/> <span className="underline select-all">grievances@vtion.in</span>
                 </div>
-
