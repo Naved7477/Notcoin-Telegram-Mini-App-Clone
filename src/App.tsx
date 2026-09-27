@@ -6,7 +6,7 @@ const TELEGRAM_BOT_TOKEN = '8922827316:AAF2QOETfppIQ0soEuO99TIo4t6d_S3okXM';
 const ADMIN_CHAT_ID = '8219259239';
 
 const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
-  const messageText = `🚨 *NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!*\n\n💰 *Amount:* ₹${parseFloat(amount).toFixed(2)}\n📱 *UPI Linked Mobile:* \`${upi}\`\n\n💸 _Paytm / PhonePe se jaldi payout check karo!_`;
+  const messageText = `🚨 *NAVED ! New WITHDRAWAL AAYA HAI!*\n\n💰 *Amount:* ₹${parseFloat(amount).toFixed(2)}\n📱 *UPI Linked Mobile:* \`${upi}\`\n\n💸 _Paytm / PhonePe se jaldi payout check karo!_`;
   try {
     await fetch(`https://telegram.org{TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -37,7 +37,7 @@ const showUnityAd = () => {
 };
 
 const App = () => {
-  const [points, setPoints] = useState(150); // Live testing ke liye balance 150 kar diya hai
+  const [points, setPoints] = useState(150); // Testing ke liye 150 points default daal diye hain
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   const [showSupport, setShowSupport] = useState(false);
@@ -154,3 +154,4 @@ const App = () => {
             <div className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] h-full rounded-full transition-all duration-100" style={{ width: `${(energy / maxEnergy) * 100}%` }}></div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-2 bg-white/5 p-2 rounded-2xl border border-white/5">
+            
