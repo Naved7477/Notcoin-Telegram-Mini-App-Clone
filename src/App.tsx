@@ -21,7 +21,10 @@ const App = () => {
   const [points, setPoints] = useState(0);
   const [energy, setEnergy] = useState(2532);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
-  const pointsToAdd = 1;
+  const [showSupport, setShowSupport] = useState(false);
+  
+  // Blue Print Settings: Har tap par 0.01 paisa badhega
+  const pointsToAdd = 0.01;
   const energyToReduce = 1;
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -33,7 +36,7 @@ const App = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    setPoints(points + pointsToAdd);
+    setPoints(Number((points + pointsToAdd).toFixed(2)));
     setEnergy(energy - energyToReduce < 0 ? 0 : energy - energyToReduce);
     setClicks([...clicks, { id: Date.now(), x, y }]);
   };
@@ -43,15 +46,41 @@ const App = () => {
   };
 
   useEffect(() => {
+    // Blue Print Settings: Refill speed ekdam slow (har 5 second mein 1 energy)
     const interval = setInterval(() => {
       setEnergy((prevEnergy) => Math.min(prevEnergy + 1, 6500));
-    }, 1000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none">
+    <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
       <div className="absolute inset-0 h-1/2 bg-gradient-to-b from-[#bf953f] via-[#fcf6ba] to-transparent opacity-10 pointer-events-none z-0"></div>
+
+      {/* Blue Print Support Popup */}
+      {showSupport && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setShowSupport(false)}>
+          <div className="bg-[#151516] border border-[#ffffff10] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center border-b border-[#ffffff10] pb-2">
+              <span className="text-lg font-bold text-gradient">🔔 Support & Updates</span>
+              <span className="cursor-pointer text-xl opacity-60" onClick={() => setShowSupport(false)}>✕</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs opacity-50">Customer Care Email:</span>
+              <span className="text-sm font-semibold select-all text-[#fcf6ba]">support@taptopaisa.com</span>
+            </div>
+            <div className="flex flex-col gap-1 mt-2">
+              <span className="text-xs opacity-50">Your Referral Link:</span>
+              <span className="text-xs bg-[#ffffff05] p-2 rounded border border-[#ffffff05] select-all overflow-x-auto whitespace-nowrap text-[#bf953f]">
+                https://t.me_{Date.now().toString().slice(-6)}
+              </span>
+            </div>
+            <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black font-bold py-2 rounded-xl mt-2 active:scale-95 transition-all text-sm" onClick={() => setShowSupport(false)}>
+              Close Panel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="w-full z-10 flex flex-col items-center flex-grow justify-between pb-8">
         <div className="w-full flex flex-col items-center pt-8">
@@ -59,8 +88,13 @@ const App = () => {
             <div className="flex items-center gap-2 bg-[#ffffff10] px-3 py-1.5 rounded-full border border-[#ffffff10]">
               <span className="text-sm font-bold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent">BRONZE</span>
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Blue Print Custom Care Bell Icon */}
+            <div className="flex items-center gap-4">
               <span className="text-sm opacity-60">Tap To Paisa</span>
+              <div className="cursor-pointer text-xl bg-[#ffffff10] p-2 rounded-full border border-[#ffffff10] active:scale-95 transition-all flex items-center justify-center" onClick={() => setShowSupport(true)}>
+                🔔
+              </div>
             </div>
           </div>
 
