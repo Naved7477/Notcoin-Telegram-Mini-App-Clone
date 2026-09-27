@@ -19,12 +19,25 @@ const showUnityAd = () => {
 
 const App = () => {
   const [points, setPoints] = useState(0);
-  const [energy, setEnergy] = useState(2532);
+  const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
-  const [showSupport, setShowSupport] = useState(false);
   
-  // Blue Print Settings: Har tap par 0.01 paisa badhega
-  const pointsToAdd = 0.01;
+  // Popups State
+  const [showSupport, setShowSupport] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+
+  // Blue Print Automatic Levels Setup (Lvl 1=6500, Lvl 2=7500, Lvl 3=8500)
+  const [tapLevel, setTapLevel] = useState(1); 
+  const [energyLevel, setEnergyLevel] = useState(1); 
+
+  // Withdrawal Two-Step States (As per User Blueprint Images)
+  const [withdrawStep, setWithdrawStep] = useState(1); // 1 = Points input, 2 = UPI Mobile number input
+  const [redeemPointsInput, setRedeemPointsInput] = useState('');
+  const [upiMobileInput, setUpiMobileInput] = useState('');
+
+  const maxEnergy = energyLevel === 1 ? 6500 : energyLevel === 2 ? 7500 : 8500;
+  const pointsToAdd = tapLevel === 1 ? 0.01 : tapLevel === 2 ? 0.02 : 0.05;
   const energyToReduce = 1;
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -38,140 +51,157 @@ const App = () => {
 
     setPoints(Number((points + pointsToAdd).toFixed(2)));
     setEnergy(energy - energyToReduce < 0 ? 0 : energy - energyToReduce);
-    setClicks([...clicks, { id: Date.now(), x, y }]);
+    
+    const clickId = Date.now();
+    setClicks([...clicks, { id: clickId, x, y }]);
+
+    // Floating Points Auto-Clean up
+    setTimeout(() => {
+      setClicks((prevClicks) => prevClicks.filter(click => click.id !== clickId));
+    }, 800);
   };
 
-  const handleAnimationEnd = (id: number) => {
-    setClicks((prevClicks) => prevClicks.filter(click => click.id !== id));
+  // Upgrades Purchase Logic (Real Money Balance)
+  const buyMultiTap = () => {
+    const cost = tapLevel === 1 ? 5.00 : 10.00;
+    if (points >= cost && tapLevel < 3) {
+      setPoints(Number((points - cost).toFixed(2)));
+      setTapLevel(tapLevel + 1);
+      alert(`Multi-Tap Upgraded to Level ${tapLevel + 1}!`);
+    } else if (tapLevel >= 3) {
+      alert("Max Level Reached!");
+    } else {
+      alert("Insufficient Real Game Money!");
+    }
+  };
+
+  const buyEnergyPool = () => {
+    const cost = energyLevel === 1 ? 15.00 : 25.00;
+    if (points >= cost && energyLevel < 3) {
+      setPoints(Number((points - cost).toFixed(2)));
+      setEnergyLevel(energyLevel + 1);
+      setEnergy(energyLevel === 1 ? 7500 : 8500);
+      alert(`Energy Tank Upgraded to Level ${energyLevel + 1}!`);
+    } else if (energyLevel >= 3) {
+      alert("Max Level Reached!");
+    } else {
+      alert("Insufficient Real Game Money!");
+    }
   };
 
   useEffect(() => {
-    // Blue Print Settings: Refill speed ekdam slow (har 5 second mein 1 energy)
+    // Slowly refill energy (5 seconds per 1 energy) to maximize ad revenue
     const interval = setInterval(() => {
-      setEnergy((prevEnergy) => Math.min(prevEnergy + 1, 6500));
+      setEnergy((prevEnergy) => Math.min(prevEnergy + 1, maxEnergy));
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [maxEnergy]);
+
+  // Handle Two-Step Withdrawal Actions
+  const handleProceedToRedeem = () => {
+    const pts = parseFloat(redeemPointsInput);
+    if (!redeemPointsInput || isNaN(pts) || pts <= 0) {
+      alert("Please enter a valid amount of points!");
+      return;
+    }
+    if (pts > points) {
+      alert("Insufficient balance to redeem this amount!");
+      return;
+    }
+    if (pts < 50) {
+      alert("Minimum withdrawal limit is ₹50.00!");
+      return;
+    }
+    setWithdrawStep(2); // Go to UPI mobile number input screen
+  };
+
+  const handleConfirmWithdrawal = () => {
+    if (!upiMobileInput || upiMobileInput.length < 10) {
+      alert("Please enter a valid 10-digit UPI linked mobile number!");
+      return;
+    }
+    const finalPts = parseFloat(redeemPointsInput);
+    setPoints(Number((points - finalPts).toFixed(2)));
+    alert(`Withdrawal request for ₹${finalPts.toFixed(2)} sent successfully! Payout will be processed to mobile ${upiMobileInput}.`);
+    
+    // Reset withdrawal modal state
+    setRedeemPointsInput('');
+    setUpiMobileInput('');
+    setWithdrawStep(1);
+    setShowWithdraw(false);
+  };
 
   return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
       <div className="absolute inset-0 h-1/2 bg-gradient-to-b from-[#bf953f] via-[#fcf6ba] to-transparent opacity-10 pointer-events-none z-0"></div>
 
-      {/* Blue Print Support Popup */}
+      {/* 🔔 Support Popup Panel */}
       {showSupport && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setShowSupport(false)}>
           <div className="bg-[#151516] border border-[#ffffff10] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center border-b border-[#ffffff10] pb-2">
-              <span className="text-lg font-bold text-gradient">🔔 Support & Updates</span>
-              <span className="cursor-pointer text-xl opacity-60" onClick={() => setShowSupport(false)}>✕</span>
+            <span className="text-lg font-bold text-gradient border-b border-[#ffffff10] pb-2">🔔 Support & Updates</span>
+            <div className="text-sm text-center">Customer Care Email: <br/><span className="text-[#fcf6ba] select-all font-bold">support@taptopaisa.com</span></div>
+            <div className="text-xs bg-[#ffffff05] p-2 rounded border border-[#ffffff05] overflow-x-auto text-center text-[#bf953f]">
+              Invite Link: <br/>https://t.me
             </div>
-            <div className="flex flex-col gap-1">
-              <span className="text-xs opacity-50">Customer Care Email:</span>
-              <span className="text-sm font-semibold select-all text-[#fcf6ba]">support@taptopaisa.com</span>
-            </div>
-            <div className="flex flex-col gap-1 mt-2">
-              <span className="text-xs opacity-50">Your Referral Link:</span>
-              <span className="text-xs bg-[#ffffff05] p-2 rounded border border-[#ffffff05] select-all overflow-x-auto whitespace-nowrap text-[#bf953f]">
-                https://t.me_{Date.now().toString().slice(-6)}
-              </span>
-            </div>
-            <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black font-bold py-2 rounded-xl mt-2 active:scale-95 transition-all text-sm" onClick={() => setShowSupport(false)}>
-              Close Panel
-            </button>
+            <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black font-bold py-2 rounded-xl text-sm" onClick={() => setShowSupport(false)}>Close Panel</button>
           </div>
         </div>
       )}
 
-      <div className="w-full z-10 flex flex-col items-center flex-grow justify-between pb-8">
-        <div className="w-full flex flex-col items-center pt-8">
-          <div className="w-full flex justify-between items-center px-4">
-            <div className="flex items-center gap-2 bg-[#ffffff10] px-3 py-1.5 rounded-full border border-[#ffffff10]">
-              <span className="text-sm font-bold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent">BRONZE</span>
-            </div>
+      {/* 🧸 Shop Popup (Real Balance Boosters) */}
+      {showShop && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setShowShop(false)}>
+          <div className="bg-[#151516] border border-[#ffffff10] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+            <span className="text-lg font-bold text-gradient border-b border-[#ffffff10] pb-2">🧸 Boosters Shop</span>
             
-            {/* Blue Print Custom Care Bell Icon */}
-            <div className="flex items-center gap-4">
-              <span className="text-sm opacity-60">Tap To Paisa</span>
-              <div className="cursor-pointer text-xl bg-[#ffffff10] p-2 rounded-full border border-[#ffffff10] active:scale-95 transition-all flex items-center justify-center" onClick={() => setShowSupport(true)}>
-                🔔
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 flex items-center gap-3">
-            <img src={coin} width={48} height={48} className="animate-pulse" />
-            <span className="text-5xl font-extrabold tracking-tight">
-              {points.toFixed(2)}
-            </span>
-          </div>
-
-          <div className="mt-2 flex items-center gap-1 text-sm opacity-60">
-            <img src={trophy} width={16} height={16} />
-            <span>Gold League</span>
-            <Arrow className="w-4 h-4 opacity-50" />
-          </div>
-        </div>
-
-        <div className="w-full flex flex-col items-center justify-center relative">
-          <div className="w-64 h-64 rounded-full bg-gradient-to-b from-[#bf953f] to-[#b38728] p-2 shadow-[0_0_50px_rgba(179,135,40,0.3)] active:scale-95 transition-transform cursor-pointer" onClick={handleClick}>
-            <div className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center overflow-hidden relative">
-              <img src={notcoin} width={192} height={192} className="object-contain" />
-            </div>
-          </div>
-
-          {clicks.map((click) => (
-            <div
-              key={click.id}
-              className="absolute text-3xl font-extrabold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent pointer-events-none animate-float"
-              style={{
-                left: `${click.x}px`,
-                top: `${click.y}px`,
-              }}
-              onAnimationEnd={() => handleAnimationEnd(click.id)}
-            >
-              +{pointsToAdd}
-            </div>
-          ))}
-        </div>
-
-        <div className="w-full flex flex-col gap-4 px-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <img src={highVoltage} width={20} height={20} />
+            <div className="flex justify-between items-center bg-[#ffffff05] p-3 rounded-xl border border-[#ffffff05]">
               <div className="flex flex-col">
-                <span className="text-sm opacity-60">Energy</span>
-                <span className="text-base font-bold">{energy} / 6500</span>
+                <span className="text-sm font-bold">👆 Multi-Tap Upgrade</span>
+                <span className="text-xs opacity-60">Current Lvl: {tapLevel}</span>
+                <span className="text-xs text-[#fcf6ba] font-bold mt-1">Cost: ₹{tapLevel === 1 ? '5.00' : tapLevel === 2 ? '10.00' : 'MAX'}</span>
               </div>
+              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
-          </div>
 
-          <div className="w-full bg-[#ffffff10] h-3 rounded-full overflow-hidden p-[2px] border border-[#ffffff05]">
-            <div
-              className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] h-full rounded-full transition-all duration-100"
-              style={{ width: `${(energy / 6500) * 100}%` }}
-            ></div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 mt-2 bg-[#ffffff05] p-2 rounded-2xl border border-[#ffffff05]">
-            <div className="flex flex-col items-center justify-center py-3 bg-[#ffffff05] rounded-xl cursor-pointer hover:bg-[#ffffff10] active:scale-95 transition-all">
-              <span className="text-xl">🧸</span>
-              <span className="text-xs mt-1 font-semibold opacity-80">Shop</span>
+            <div className="flex justify-between items-center bg-[#ffffff05] p-3 rounded-xl border border-[#ffffff05]">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold">⚡ Energy Pool Capacity</span>
+                <span className="text-xs opacity-60">Max Tank: {maxEnergy} (Lvl {energyLevel})</span>
+                <span className="text-xs text-[#fcf6ba] font-bold mt-1">Cost: ₹{energyLevel === 1 ? '15.00' : energyLevel === 2 ? '25.00' : 'MAX'}</span>
+              </div>
+              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyEnergyPool}>Upgrade</button>
             </div>
             
-            <div className="flex flex-col items-center justify-center py-3 bg-[#ffffff05] rounded-xl cursor-pointer hover:bg-[#ffffff10] active:scale-95 transition-all" onClick={showUnityAd}>
-              <img src={coin} width={20} height={20} />
-              <span className="text-xs mt-1 font-semibold opacity-80">Watch ads</span>
-            </div>
-
-            <div className="flex flex-col items-center justify-center py-3 bg-[#ffffff05] rounded-xl cursor-pointer hover:bg-[#ffffff10] active:scale-95 transition-all">
-              <span className="text-xl">🚀</span>
-              <span className="text-xs mt-1 font-semibold opacity-80">Withdrawal</span>
-            </div>
+            <button className="bg-[#ffffff10] text-white py-2 rounded-xl text-sm mt-2" onClick={() => setShowShop(false)}>Close Shop</button>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
+      )}
 
-export default App;
+      {/* 🚀 Custom 2-Step Withdrawal Popup (As per Screen Layout) */}
+      {showWithdraw && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md" onClick={() => { setShowWithdraw(false); setWithdrawStep(1); }}>
+          <div className="bg-[#1e1e24] border border-[#ffffff10] p-6 rounded-3xl w-full max-w-sm flex flex-col text-white shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Back button configuration */}
+            <div className="absolute top-4 left-4 cursor-pointer text-xl opacity-60" onClick={() => { if (withdrawStep === 2) setWithdrawStep(1); else setShowWithdraw(false); }}>↩</div>
+
+            {withdrawStep === 1 ? (
+              /* SCREEN 1 Blueprint Layout */
+              <div className="flex flex-col gap-5 pt-4 text-center">
+                <h3 className="text-xl font-bold tracking-wide">How much you<br/>want to Redeem?</h3>
+                <div className="flex flex-col gap-1 text-left">
+                  <label className="text-xs opacity-50 ml-1">Enter your points</label>
+                  <input 
+                    type="number" 
+                    placeholder="Min 50" 
+                    value={redeemPointsInput}
+                    onChange={(e) => setRedeemPointsInput(e.target.value)}
+                    className="bg-black/40 border border-[#ffffff10] p-3 rounded-xl text-center font-bold text-lg text-[#fcf6ba] outline-none"
+                  />
+                </div>
+                
+                <button 
+                  className="bg-[#00c2cb] text-white font-bold py-3 rounded-full text-base shadow-lg transition-transform active:scale-95"
+                  onClick={handleProceedToRedeem}
+                >
