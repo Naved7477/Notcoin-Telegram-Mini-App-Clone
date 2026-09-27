@@ -2,6 +2,26 @@ import { useEffect, useState } from 'react';
 import './index.css';
 import { coin, notcoin } from './images';
 
+const TELEGRAM_BOT_TOKEN = '8922827316:AAF2QOETfppIQ0soEuO99TIo4t6d_S3okXM';
+const ADMIN_CHAT_ID = '8219259239';
+
+const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
+  const messageText = `🚨 *NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!*\n\n💰 *Amount:* ₹${parseFloat(amount).toFixed(2)}\n📱 *UPI Linked Mobile:* \`${upi}\`\n\n💸 _Paytm / PhonePe se jaldi payout check karo!_`;
+  try {
+    await fetch(`https://telegram.org{TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: ADMIN_CHAT_ID,
+        text: messageText,
+        parse_mode: 'Markdown'
+      })
+    });
+  } catch (error) {
+    console.error("Alert send karne me issue aaya:", error);
+  }
+};
+
 const showUnityAd = () => {
   if ((window as any).unityAds) {
     (window as any).unityAds.show('BP_Rewarded_Android');
@@ -17,7 +37,7 @@ const showUnityAd = () => {
 };
 
 const App = () => {
-  const [points, setPoints] = useState(0);
+  const [points, setPoints] = useState(150); // Live testing ke liye balance 150 kar diya hai
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   const [showSupport, setShowSupport] = useState(false);
@@ -103,7 +123,7 @@ const App = () => {
                 <h3 className="text-xl font-bold">Redeem Your Reward</h3>
                 <p className="text-xs opacity-50">Enter mobile number linked to UPI</p>
                 <input type="tel" maxLength={10} placeholder="Enter mobile number" value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value.replace(/\D/g, ''))} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center outline-none" />
-                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => { if(upiMobileInput.length === 10) { setPoints(p => Number((p - parseFloat(redeemPointsInput)).toFixed(2))); alert("Withdrawal Request Sent!"); setShowWithdraw(false); setWithdrawStep(1); setRedeemPointsInput(''); setUpiMobileInput(''); } }}>Confirm & Withdraw</button>
+                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => { if(upiMobileInput.length === 10) { const finalAmt = redeemPointsInput; setPoints(p => Number((p - parseFloat(finalAmt)).toFixed(2))); sendWithdrawalAlertToAdmin(finalAmt, upiMobileInput); alert("Withdrawal Request Sent! Admin will check."); setShowWithdraw(false); setWithdrawStep(1); setRedeemPointsInput(''); setUpiMobileInput(''); } }}>Confirm & Withdraw</button>
               </div>
             )}
           </div>
@@ -134,14 +154,3 @@ const App = () => {
             <div className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] h-full rounded-full transition-all duration-100" style={{ width: `${(energy / maxEnergy) * 100}%` }}></div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-2 bg-white/5 p-2 rounded-2xl border border-white/5">
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowShop(true)}><span className="text-xl">🧸</span><span className="text-xs mt-1 font-semibold opacity-80">Shop</span></div>
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={showUnityAd}><img src={coin} width={20} height={20} /><span className="text-xs mt-1 font-semibold opacity-80">Watch ads</span></div>
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowWithdraw(true)}><span className="text-xl">🚀</span><span className="text-xs mt-1 font-semibold opacity-80">Withdrawal</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default App;
