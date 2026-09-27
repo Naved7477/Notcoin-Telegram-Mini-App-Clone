@@ -209,4 +209,3 @@ const App = () => {
                   Need support? <br/> <span className="underline select-all">grievances@vtion.in</span>
                 </div>
 
-                
