@@ -21,8 +21,8 @@ const App = () => {
   const [points, setPoints] = useState(0);
   const [energy, setEnergy] = useState(2532);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
-  const pointsToAdd = 12;
-  const energyToReduce = 12;
+  const pointsToAdd = 1;
+  const energyToReduce = 1;
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (energy - energyToReduce < 0) {
@@ -45,7 +45,7 @@ const App = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setEnergy((prevEnergy) => Math.min(prevEnergy + 1, 6500));
-    }, 100);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -67,7 +67,7 @@ const App = () => {
           <div className="mt-12 flex items-center gap-3">
             <img src={coin} width={48} height={48} className="animate-pulse" />
             <span className="text-5xl font-extrabold tracking-tight">
-              {points.toLocaleString()}
+              {points.toFixed(2)}
             </span>
           </div>
 
