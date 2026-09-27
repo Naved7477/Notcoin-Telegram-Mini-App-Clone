@@ -14,8 +14,10 @@ const showUnityAd = () => {
     };
     document.body.appendChild(script);
   }
+};
+
 const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
-  const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: " + amount + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Payout check karo!";
+  const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Payout check karo!";
   try {
     await fetch("https://telegram.org", {
       method: 'POST',
@@ -30,9 +32,8 @@ const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
   }
 };
 
-
 const App = () => {
-  const [points, setPoints] = useState(150); // Live testing balance ₹150
+  const [points, setPoints] = useState(150); // Live testing ke liye default balance 150 diya hai
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   const [showSupport, setShowSupport] = useState(false);
@@ -71,7 +72,8 @@ const App = () => {
     const interval = setInterval(() => setEnergy(p => Math.min(p + 1, maxEnergy)), 5000);
     return () => clearInterval(interval);
   }, [maxEnergy]);
-    return (
+
+  return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
       {showSupport && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowSupport(false)}>
@@ -148,14 +150,3 @@ const App = () => {
             <div className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] h-full rounded-full transition-all duration-100" style={{ width: `${(energy / maxEnergy) * 100}%` }}></div>
           </div>
           <div className="grid grid-cols-3 gap-2 mt-2 bg-white/5 p-2 rounded-2xl border border-white/5">
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowShop(true)}><span className="text-xl">🧸</span><span className="text-xs mt-1 font-semibold opacity-80">Shop</span></div>
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={showUnityAd}><img src={coin} width={20} height={20} /><span className="text-xs mt-1 font-semibold opacity-80">Watch ads</span></div>
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowWithdraw(true)}><span className="text-xl">🚀</span><span className="text-xs mt-1 font-semibold opacity-80">Withdrawal</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default App;
