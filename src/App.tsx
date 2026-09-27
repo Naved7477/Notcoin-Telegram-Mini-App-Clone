@@ -19,7 +19,7 @@ const showUnityAd = () => {
 const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
   const token = '8922827316:AAF2QOETfppIQ0soEuO99TIo4t6d_S3okXM';
   const chatId = '8219259239';
-  const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Paytm / PhonePe se jaldi payout check karo!";
+  const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Payout check karo!";
   
   try {
     await fetch("https://telegram.org" + token + "/sendMessage", {
@@ -36,7 +36,7 @@ const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
 };
 
 const App = () => {
-  const [points, setPoints] = useState(150); // Live testing balance ₹150 default diya hai
+  const [points, setPoints] = useState(150); // Default testing balance 150
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   const [showSupport, setShowSupport] = useState(false);
