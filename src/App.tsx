@@ -32,7 +32,7 @@ const App = () => {
   const [energyLevel, setEnergyLevel] = useState(1); 
 
   // Withdrawal Two-Step States (As per User Blueprint Images)
-  const [withdrawStep, setWithdrawStep] = useState(1); // 1 = Points input, 2 = UPI Mobile number input
+  const [withdrawStep, setWithdrawStep] = useState(1); 
   const [redeemPointsInput, setRedeemPointsInput] = useState('');
   const [upiMobileInput, setUpiMobileInput] = useState('');
 
@@ -90,7 +90,6 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Slowly refill energy (5 seconds per 1 energy) to maximize ad revenue
     const interval = setInterval(() => {
       setEnergy((prevEnergy) => Math.min(prevEnergy + 1, maxEnergy));
     }, 5000);
@@ -112,7 +111,7 @@ const App = () => {
       alert("Minimum withdrawal limit is ₹50.00!");
       return;
     }
-    setWithdrawStep(2); // Go to UPI mobile number input screen
+    setWithdrawStep(2); 
   };
 
   const handleConfirmWithdrawal = () => {
@@ -124,7 +123,6 @@ const App = () => {
     setPoints(Number((points - finalPts).toFixed(2)));
     alert(`Withdrawal request for ₹${finalPts.toFixed(2)} sent successfully! Payout will be processed to mobile ${upiMobileInput}.`);
     
-    // Reset withdrawal modal state
     setRedeemPointsInput('');
     setUpiMobileInput('');
     setWithdrawStep(1);
@@ -183,7 +181,6 @@ const App = () => {
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-md" onClick={() => { setShowWithdraw(false); setWithdrawStep(1); }}>
           <div className="bg-[#1e1e24] border border-[#ffffff10] p-6 rounded-3xl w-full max-w-sm flex flex-col text-white shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
             
-            {/* Back button configuration */}
             <div className="absolute top-4 left-4 cursor-pointer text-xl opacity-60" onClick={() => { if (withdrawStep === 2) setWithdrawStep(1); else setShowWithdraw(false); }}>↩</div>
 
             {withdrawStep === 1 ? (
@@ -205,3 +202,11 @@ const App = () => {
                   className="bg-[#00c2cb] text-white font-bold py-3 rounded-full text-base shadow-lg transition-transform active:scale-95"
                   onClick={handleProceedToRedeem}
                 >
+                  Proceed to Redeem
+                </button>
+
+                <div className="text-xs opacity-40 mt-2">
+                  Need support? <br/> <span className="underline select-all">grievances@vtion.in</span>
+                </div>
+
+                
