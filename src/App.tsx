@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import './index.css';
-import Arrow from './icons/Arrow';
-import { coin, highVoltage, notcoin, trophy } from './images';
+import { coin, notcoin } from './images';
 
 const showUnityAd = () => {
   if ((window as any).unityAds) {
@@ -57,6 +56,7 @@ const App = () => {
     const interval = setInterval(() => setEnergy(p => Math.min(p + 1, maxEnergy)), 5000);
     return () => clearInterval(interval);
   }, [maxEnergy]);
+
   return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
       {showSupport && (
