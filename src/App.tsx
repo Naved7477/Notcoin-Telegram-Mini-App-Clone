@@ -38,7 +38,6 @@ const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
 };
 
 const App = () => {
-  // NAVED BHAI YAHAN KANGAAL HONE WALA LAFDA JADD SE KHATAM (0.00 SET UP)
   const [points, setPoints] = useState(() => Number(localStorage.getItem('naved_points') || '0.00'));
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
@@ -77,7 +76,7 @@ const App = () => {
   useEffect(() => {
     const lastRewardedRank = Number(localStorage.getItem('last_rewarded_rank') || '0');
     if (currentRankIndex > lastRewardedRank) {
-      setPoints(p => Number((p + 20.00).toFixed(2))); // HAR 100 PAR STRICT 20 RUPEES LOCK
+      setPoints(p => Number((p + 20.00).toFixed(2)));
       localStorage.setItem('last_rewarded_rank', currentRankIndex.toString());
       alert("🎉 Badhaai Ho! Aapka Rank Up Hua Aur ₹20.00 Bonus Mila!");
     }
@@ -188,4 +187,5 @@ const App = () => {
               <div className="flex flex-col"><span className="text-sm font-bold">👆 Multi-Tap (Lvl {tapLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{tapLevel === 1 ? '5.00' : tapLevel === 2 ? '10.00' : 'MAX'}</span></div>
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
-    
+            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+              
