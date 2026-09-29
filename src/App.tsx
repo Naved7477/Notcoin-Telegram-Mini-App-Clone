@@ -1,155 +1,849 @@
-import { useEffect, useState } from 'react';
-import './index.css';
-import { coin, notcoin } from './images';
+import { useEffect, useMemo, useState } from "react";
 
-const showUnityAd = () => {
-  if ((window as any).unityAds) {
-    (window as any).unityAds.show('BP_Rewarded_Android');
-  } else {
-    const script = document.createElement('script');
-    script.src = 'https://jsdelivr.net';
-    script.onload = () => {
-      (window as any).unityAds.initialize('800380130', false);
-      setTimeout(() => (window as any).unityAds.show('BP_Rewarded_Android'), 1000);
+const APP_VERSION = "1.0.1";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
+type User = {
+  id: number;
+  telegramId: string;
+  username: string;
+  firstName: string;
+  balanceCents: number;
+  points: number;
+  energy: number;
+  tapLevel: number;
+  energyLevel: number;
+  adsWatchedToday: number;
+  rank: string;
+  rankIndex: number;
+};
+
+type Transaction = {
+  id: number;
+  type: string;
+  amountCents: number;
+  pointsDelta: number;
+  status: string;
+  reference: string | null;
+  createdAt: string;
+};
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp?: {
+        ready: () => void;
+        expand: () => void;
+        initData: string;
+        initDataUnsafe?: {
+          user?: {
+            id: number;
+            username?: string;
+            first_name?: string;
+          };
+        };
+        showAlert?: (message: string) => void;
+      };
     };
-    document.body.appendChild(script);
   }
-};
+}
 
-const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
-  const token = '8922827316:AAF2QOETfppIQ0soEuO99TIo4t6d_S3okXM';
-  const chatId = '8219259239';
-  const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Payout check karo!";
-  
-  try {
-    await fetch("https://telegram.org" + token + "/sendMessage", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: messageText
-      })
-    });
-  } catch (error) {
-    console.error("Alert send karne me issue aaya:", error);
+function money(cents: number) {
+  return `₹${(cents / 100).toFixed(2)}`;
+}
+
+function getTelegramInitData() {
+  return window.Telegram?.WebApp?.initData || "";
+}
+
+async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const initData = getTelegramInitData();
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+      ...(options.headers || {}),
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data?.error || "Something went wrong");
   }
-};
 
-const App = () => {
-  const [points, setPoints] = useState(150); // Default testing balance 150
-  const [energy, setEnergy] = useState(6500);
-  const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
-  const [showSupport, setShowSupport] = useState(false);
-  const [showShop, setShowShop] = useState(false);
+  return data;
+}
+
+export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  const [showRank, setShowRank] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [tapLevel, setTapLevel] = useState(1); 
-  const [energyLevel, setEnergyLevel] = useState(1); 
-  const [withdrawStep, setWithdrawStep] = useState(1); 
-  const [redeemPointsInput, setRedeemPointsInput] = useState('');
-  const [upiMobileInput, setUpiMobileInput] = useState('');
+  const [showShop, setShowShop] = useState(false);
+  const [showUpdate, setShowUpdate] = useState(false);
 
-  const maxEnergy = energyLevel === 1 ? 6500 : energyLevel === 2 ? 7500 : 8500;
-  const pointsToAdd = tapLevel === 1 ? 0.01 : tapLevel === 2 ? 0.02 : 0.05;
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [upi, setUpi] = useState("");
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (energy - 1 < 0) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPoints(Number((points + pointsToAdd).toFixed(2)));
-    setEnergy(energy - 1);
-    const clickId = Date.now();
-    setClicks([...clicks, { id: clickId, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
-    setTimeout(() => setClicks(p => p.filter(c => c.id !== clickId)), 800);
-  };
+  const [tapLoading, setTapLoading] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
 
-  const buyMultiTap = () => {
-    const cost = tapLevel === 1 ? 5 : 10;
-    if (points >= cost && tapLevel < 3) { setPoints(p => Number((p - cost).toFixed(2))); setTapLevel(tapLevel + 1); }
-  };
+  const [floatingCoins, setFloatingCoins] = useState<
+    { id: number; text: string }[]
+  >([]);
 
-  const buyEnergyPool = () => {
-    const cost = energyLevel === 1 ? 15 : 25;
-    if (points >= cost && energyLevel < 3) { setPoints(p => Number((p - cost).toFixed(2))); setEnergyLevel(energyLevel + 1); setEnergy(energyLevel === 1 ? 7500 : 8500); }
-  };
+  const ranks = [
+    "BRONZE",
+    "SILVER",
+    "GOLD",
+    "PLATINUM",
+    "DIAMOND",
+    "MASTER",
+  ];
+
+  const nextRank = useMemo(() => {
+    if (!user) return null;
+
+    const nextIndex = user.rankIndex + 1;
+
+    if (nextIndex >= ranks.length) {
+      return null;
+    }
+
+    return {
+      name: ranks[nextIndex],
+      pointsNeeded: Math.max(0, (nextIndex * 100) - user.points),
+    };
+  }, [user]);
 
   useEffect(() => {
-    const interval = setInterval(() => setEnergy(p => Math.min(p + 1, maxEnergy)), 5000);
-    return () => clearInterval(interval);
-  }, [maxEnergy]);
+    const telegram = window.Telegram?.WebApp;
+
+    if (telegram) {
+      telegram.ready();
+      telegram.expand();
+    }
+
+    loadUser();
+
+    const hasSeenVersion = localStorage.getItem("app_version");
+
+    if (hasSeenVersion !== APP_VERSION) {
+      setShowUpdate(true);
+      localStorage.setItem("app_version", APP_VERSION);
+    }
+  }, []);
+
+  async function loadUser() {
+    try {
+      setLoading(true);
+
+      const data = await api<{ user: User }>("/api/me");
+
+      setUser(data.user);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Unable to load account"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadTransactions() {
+    try {
+      const data = await api<{ transactions: Transaction[] }>(
+        "/api/transactions"
+      );
+
+      setTransactions(data.transactions);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Unable to load history"
+      );
+    }
+  }
+
+  async function handleTap() {
+    if (!user || tapLoading) return;
+
+    if (user.energy <= 0) {
+      setMessage("⚡ Energy khatam hai.");
+      return;
+    }
+
+    try {
+      setTapLoading(true);
+
+      const data = await api<{ user: User }>("/api/tap", {
+        method: "POST",
+      });
+
+      setUser(data.user);
+
+      const id = Date.now();
+
+      setFloatingCoins((old) => [...old, { id, text: "+₹0.01" }]);
+
+      setTimeout(() => {
+        setFloatingCoins((old) => old.filter((item) => item.id !== id));
+      }, 900);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Tap failed"
+      );
+    } finally {
+      setTapLoading(false);
+    }
+  }
+
+  async function handleAd() {
+    if (!user || adLoading) return;
+
+    if (user.adsWatchedToday >= 100) {
+      setMessage("Aaj ke 100 ads complete ho gaye.");
+      return;
+    }
+
+    /*
+      IMPORTANT:
+      Yahan actual rewarded-ad provider connect karna hoga.
+
+      Reward tabhi backend ko bhejna hai jab ad provider
+      successful completion confirm kare.
+
+      Example:
+      const adSessionId = await yourAdProvider.showRewardedAd();
+
+      Then:
+      POST /api/ads/reward
+    */
+
+    try {
+      setAdLoading(true);
+
+      setMessage(
+        "Rewarded ad provider abhi connect nahi hai. Ad complete hone ke baad hi ₹0.25 milega."
+      );
+
+      /*
+      Example backend call after VERIFIED ad completion:
+
+      const adSessionId = "provider-generated-session-id";
+
+      const data = await api<{ user: User }>("/api/ads/reward", {
+        method: "POST",
+        body: JSON.stringify({
+          adSessionId,
+        }),
+      });
+
+      setUser(data.user);
+      */
+
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Ad failed"
+      );
+    } finally {
+      setAdLoading(false);
+    }
+  }
+
+  async function openHistory() {
+    await loadTransactions();
+    setShowHistory(true);
+  }
+
+  async function handleWithdraw() {
+    if (!user) return;
+
+    const amount = Number(withdrawAmount);
+
+    if (!amount || amount < 50) {
+      setMessage("Minimum withdrawal ₹50 hai.");
+      return;
+    }
+
+    if (!upi.trim()) {
+      setMessage("UPI ID enter karo.");
+      return;
+    }
+
+    if (amount * 100 > user.balanceCents) {
+      setMessage("Balance insufficient hai.");
+      return;
+    }
+
+    try {
+      setWithdrawLoading(true);
+
+      await api("/api/withdrawals", {
+        method: "POST",
+        body: JSON.stringify({
+          amountCents: Math.round(amount * 100),
+          upi: upi.trim(),
+        }),
+      });
+
+      setWithdrawAmount("");
+      setUpi("");
+      setShowWithdraw(false);
+
+      setMessage(
+        "✅ Withdrawal request submit ho gayi. Admin ko notification bhej diya gaya hai."
+      );
+
+      await loadUser();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Withdrawal failed"
+      );
+    } finally {
+      setWithdrawLoading(false);
+    }
+  }
+
+  function closeMessage() {
+    setMessage("");
+  }
+
+  if (loading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loader">LOADING...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="app loading-screen">
+        <div className="error-box">
+          <h2>Unable to load game</h2>
+
+          <p>{message || "Please open the game from Telegram."}</p>
+
+          <button onClick={loadUser}>RETRY</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
-      {showSupport && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowSupport(false)}>
-          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={e => e.stopPropagation()}>
-            <span className="text-lg font-bold border-b border-white/10 pb-2">🔔 Support & Referral</span>
-            <div className="text-sm">Email: <span className="text-[#fcf6ba] select-all">support@taptopaisa.com</span></div>
-            <div className="text-xs bg-white/5 p-2 rounded text-[#bf953f] overflow-x-auto">https://t.me</div>
-            <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black font-bold py-2 rounded-xl text-sm" onClick={() => setShowSupport(false)}>Close</button>
+    <div className="app">
+      {/* TOP BAR */}
+
+      <header className="topbar">
+        <button
+          className="rank-button"
+          onClick={() => setShowRank(true)}
+        >
+          <span className="rank-icon">🏆</span>
+
+          <span>
+            <small>RANK</small>
+            <strong>{user.rank}</strong>
+          </span>
+        </button>
+
+        <div className="logo">
+          <span>TAP</span>
+          <b>2</b>
+          <span>PAISA</span>
+        </div>
+
+        <button
+          className="bell-button"
+          onClick={openHistory}
+          aria-label="Transaction history"
+        >
+          🔔
+        </button>
+      </header>
+
+      {/* BALANCE */}
+
+      <section className="balance-card">
+        <div className="balance-label">YOUR BALANCE</div>
+
+        <div className="balance">
+          {money(user.balanceCents)}
+        </div>
+
+        <div className="points">
+          ⭐ {user.points} POINTS
+        </div>
+      </section>
+
+      {/* ENERGY */}
+
+      <section className="energy-section">
+        <div className="energy-row">
+          <span>⚡ ENERGY</span>
+
+          <strong>{user.energy}</strong>
+        </div>
+
+        <div className="energy-bar">
+          <div
+            className="energy-fill"
+            style={{
+              width: `${Math.min(
+                100,
+                Math.max(0, user.energy)
+              )}%`,
+            }}
+          />
+        </div>
+      </section>
+
+      {/* TAP AREA */}
+
+      <main className="game-area">
+        <div className="floating-container">
+          {floatingCoins.map((coin) => (
+            <div key={coin.id} className="floating-coin">
+              {coin.text}
+            </div>
+          ))}
+        </div>
+
+        <button
+          className="tap-button"
+          onClick={handleTap}
+          disabled={tapLoading || user.energy <= 0}
+        >
+          <span className="coin-symbol">₹</span>
+
+          <span className="tap-text">TAP</span>
+
+          <small>+₹0.01</small>
+        </button>
+
+        <div className="tap-info">
+          Tap karke ₹0.01 earn karo
+        </div>
+      </main>
+
+      {/* ADS */}
+
+      <section className="ads-card">
+        <div className="ads-header">
+          <div>
+            <strong>🎬 WATCH ADS</strong>
+
+            <span>Earn ₹0.25 per verified ad</span>
+          </div>
+
+          <div className="ads-count">
+            {user.adsWatchedToday}/100
+          </div>
+        </div>
+
+        <div className="ads-progress">
+          <div
+            style={{
+              width: `${Math.min(
+                100,
+                (user.adsWatchedToday / 100) * 100
+              )}%`,
+            }}
+          />
+        </div>
+
+        <button
+          className="watch-ad-button"
+          onClick={handleAd}
+          disabled={
+            adLoading || user.adsWatchedToday >= 100
+          }
+        >
+          {adLoading ? "LOADING..." : "WATCH AD +₹0.25"}
+        </button>
+      </section>
+
+      {/* NEXT RANK */}
+
+      <section className="rank-progress-card">
+        <div className="rank-progress-header">
+          <span>
+            🏆 {user.rank}
+          </span>
+
+          {nextRank ? (
+            <span>
+              {nextRank.pointsNeeded} points to {nextRank.name}
+            </span>
+          ) : (
+            <span>MAX RANK</span>
+          )}
+        </div>
+
+        <div className="rank-progress">
+          <div
+            style={{
+              width: `${Math.min(
+                100,
+                ((user.points % 100) / 100) * 100
+              )}%`,
+            }}
+          />
+        </div>
+
+        <p>
+          Every 100 points = next rank + ₹20 bonus
+        </p>
+      </section>
+
+      {/* ACTION BUTTONS */}
+
+      <section className="actions">
+        <button
+          className="action-button withdraw"
+          onClick={() => setShowWithdraw(true)}
+        >
+          <span>💸</span>
+          <strong>WITHDRAW</strong>
+          <small>Minimum ₹50</small>
+        </button>
+
+        <button
+          className="action-button"
+          onClick={openHistory}
+        >
+          <span>📜</span>
+          <strong>HISTORY</strong>
+          <small>Transactions</small>
+        </button>
+
+        <button
+          className="action-button"
+          onClick={() => setShowShop(true)}
+        >
+          <span>🛒</span>
+          <strong>SHOP</strong>
+          <small>Upgrade</small>
+        </button>
+      </section>
+
+      {/* USER INFO */}
+
+      <footer className="footer">
+        <div>
+          👤 {user.firstName || user.username || "Player"}
+        </div>
+
+        <div>v{APP_VERSION}</div>
+      </footer>
+
+      {/* MESSAGE */}
+
+      {message && (
+        <div className="message-overlay">
+          <div className="message-box">
+            <p>{message}</p>
+
+            <button onClick={closeMessage}>OK</button>
           </div>
         </div>
       )}
 
-      {showShop && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowShop(false)}>
-          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={e => e.stopPropagation()}>
-            <span className="text-lg font-bold border-b border-white/10 pb-2">🧸 Boosters Shop</span>
-            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-              <div className="flex flex-col"><span className="text-sm font-bold">👆 Multi-Tap (Lvl {tapLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{tapLevel === 1 ? '5.00' : tapLevel === 2 ? '10.00' : 'MAX'}</span></div>
-              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
+      {/* RANK MODAL */}
+
+      {showRank && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowRank(false)}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setShowRank(false)}
+            >
+              ×
+            </button>
+
+            <h2>🏆 RANK SYSTEM</h2>
+
+            <p className="modal-subtitle">
+              Har 100 points par next rank.
+            </p>
+
+            <div className="rank-list">
+              {ranks.map((rank, index) => {
+                const unlocked =
+                  user.rankIndex >= index;
+
+                return (
+                  <div
+                    key={rank}
+                    className={`rank-item ${
+                      unlocked ? "unlocked" : "locked"
+                    } ${
+                      user.rank === rank ? "current" : ""
+                    }`}
+                  >
+                    <div className="rank-number">
+                      {index === 0
+                        ? "🥉"
+                        : index === 1
+                        ? "🥈"
+                        : index === 2
+                        ? "🥇"
+                        : index === 3
+                        ? "💎"
+                        : index === 4
+                        ? "💠"
+                        : "👑"}
+                    </div>
+
+                    <div className="rank-name">
+                      <strong>{rank}</strong>
+
+                      <small>
+                        {index * 100} points
+                      </small>
+                    </div>
+
+                    <div className="rank-bonus">
+                      +₹20
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-              <div className="flex flex-col"><span className="text-sm font-bold">⚡ Energy Pool (Lvl {energyLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{energyLevel === 1 ? '15.00' : energyLevel === 2 ? '25.00' : 'MAX'}</span></div>
-              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyEnergyPool}>Upgrade</button>
-            </div>
-            <button className="bg-white/10 py-2 rounded-xl text-sm" onClick={() => setShowShop(false)}>Close</button>
           </div>
         </div>
       )}
 
-      {showWithdraw && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => { setShowWithdraw(false); setWithdrawStep(1); }}>
-          <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col relative" onClick={e => e.stopPropagation()}>
-            <div className="absolute top-4 left-4 cursor-pointer text-xl opacity-60" onClick={() => withdrawStep === 2 ? setWithdrawStep(1) : setShowWithdraw(false)}>↩</div>
-            {withdrawStep === 1 ? (
-              <div className="flex flex-col gap-5 pt-4 text-center">
-                <h3 className="text-xl font-bold">How much you<br/>want to Redeem?</h3>
-                <input type="number" placeholder="Min 50" value={redeemPointsInput} onChange={e => setRedeemPointsInput(e.target.value)} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center font-bold text-[#fcf6ba] outline-none" />
-                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => parseFloat(redeemPointsInput) >= 50 && parseFloat(redeemPointsInput) <= points ? setWithdrawStep(2) : alert("Check Balance (Min ₹50)")}>Proceed to Redeem</button>
-                <div className="text-xs opacity-50">Available Balance: ₹{points.toFixed(2)}</div>
+      {/* HISTORY MODAL */}
+
+      {showHistory && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowHistory(false)}
+        >
+          <div
+            className="modal history-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setShowHistory(false)}
+            >
+              ×
+            </button>
+
+            <h2>📜 TRANSACTION HISTORY</h2>
+
+            {transactions.length === 0 ? (
+              <div className="empty-history">
+                No transactions yet.
               </div>
             ) : (
-              <div className="flex flex-col gap-5 pt-4 text-center">
-                <h3 className="text-xl font-bold">Redeem Your Reward</h3>
-                <p className="text-xs opacity-50">Enter mobile number linked to UPI</p>
-                <input type="tel" maxLength={10} placeholder="Enter mobile number" value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value.replace(/\D/g, ''))} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center outline-none" />
-                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => { if(upiMobileInput.length === 10) { const finalAmt = redeemPointsInput; setPoints(p => Number((p - parseFloat(finalAmt)).toFixed(2))); sendWithdrawalAlertToAdmin(finalAmt, upiMobileInput); alert("Withdrawal Request Sent! Admin will check."); setShowWithdraw(false); setWithdrawStep(1); setRedeemPointsInput(''); setUpiMobileInput(''); } }}>Confirm & Withdraw</button>
+              <div className="transaction-list">
+                {transactions.map((tx) => (
+                  <div
+                    className="transaction"
+                    key={tx.id}
+                  >
+                    <div className="transaction-icon">
+                      {tx.type === "tap"
+                        ? "👆"
+                        : tx.type === "ad_reward"
+                        ? "🎬"
+                        : tx.type === "rank_bonus"
+                        ? "🏆"
+                        : tx.type === "withdrawal"
+                        ? "💸"
+                        : "💰"}
+                    </div>
+
+                    <div className="transaction-info">
+                      <strong>
+                        {formatTransactionType(tx.type)}
+                      </strong>
+
+                      <small>
+                        {formatDate(tx.createdAt)}
+                      </small>
+                    </div>
+
+                    <div
+                      className={`transaction-amount ${
+                        tx.amountCents >= 0
+                          ? "positive"
+                          : "negative"
+                      }`}
+                    >
+                      {tx.amountCents >= 0
+                        ? "+"
+                        : ""}
+                      {money(Math.abs(tx.amountCents))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
 
-      <div className="w-full z-10 flex flex-col items-center flex-grow justify-between pb-8">
-        <div className="w-full flex flex-col items-center pt-8">
-          <div className="w-full flex justify-between items-center px-4">
-            <span className="text-sm font-bold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent">BRONZE</span>
-            <div className="cursor-pointer text-xl" onClick={() => setShowSupport(true)}>🔔</div>
-          </div>
-          <div className="mt-12 flex items-center gap-3">
-            <img src={coin} width={48} height={48} />
-            <span className="text-5xl font-extrabold tracking-tight">{points.toFixed(2)}</span>
+      {/* WITHDRAW MODAL */}
+
+      {showWithdraw && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowWithdraw(false)}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setShowWithdraw(false)}
+            >
+              ×
+            </button>
+
+            <h2>💸 WITHDRAW</h2>
+
+            <div className="withdraw-balance">
+              Available:{" "}
+              <strong>{money(user.balanceCents)}</strong>
+            </div>
+
+            <label>Amount</label>
+
+            <div className="input-with-prefix">
+              <span>₹</span>
+
+              <input
+                type="number"
+                min="50"
+                step="1"
+                placeholder="Minimum 50"
+                value={withdrawAmount}
+                onChange={(e) =>
+                  setWithdrawAmount(e.target.value)
+                }
+              />
+            </div>
+
+            <label>UPI ID</label>
+
+            <input
+              className="text-input"
+              type="text"
+              placeholder="example@upi"
+              value={upi}
+              onChange={(e) => setUpi(e.target.value)}
+            />
+
+            <div className="withdraw-note">
+              <strong>Minimum withdrawal: ₹50</strong>
+
+              <p>
+                Request submit hone ke baad admin ko
+                Telegram notification jayega.
+              </p>
+            </div>
+
+            <button
+              className="primary-button"
+              onClick={handleWithdraw}
+              disabled={withdrawLoading}
+            >
+              {withdrawLoading
+                ? "SUBMITTING..."
+                : "REQUEST WITHDRAWAL"}
+            </button>
           </div>
         </div>
+      )}
 
-        <div className="w-64 h-64 rounded-full bg-gradient-to-b from-[#bf953f] to-[#b38728] p-2 active:scale-95 transition-transform cursor-pointer" onClick={handleClick}>
-          <div className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center overflow-hidden">
-            <img src={notcoin} width={192} height={192} />
+      {/* SHOP MODAL */}
+
+      {showShop && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowShop(false)}
+        >
+          <div
+            className="modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="modal-close"
+              onClick={() => setShowShop(false)}
+            >
+              ×
+            </button>
+
+            <h2>🛒 SHOP</h2>
+
+            <div className="shop-item">
+              <div>
+                <strong>⚡ Energy Level</strong>
+
+                <small>
+                  Current Level: {user.energyLevel}
+                </small>
+              </div>
+
+              <button disabled>
+                COMING SOON
+              </button>
+            </div>
+
+            <div className="shop-item">
+              <div>
+                <strong>👆 Tap Level</strong>
+
+                <small>
+                  Current Level: {user.tapLevel}
+                </small>
+              </div>
+
+              <button disabled>
+                COMING SOON
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="w-full flex flex-col gap-4 px-4">
-          <span className="text-sm opacity-60">Energy: {energy} / {maxEnergy}</span>
-          <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden p-[2px]">
-            <div className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] h-full rounded-full transition-all duration-100" style={{ width: `${(energy / maxEnergy) * 100}%` }}></div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 mt-2 bg-white/5 p-2 rounded-2xl border border-white/5">
+      {/* UPDATE MODAL */}
+
+      {showUpdate && (
+        <div className="modal-overlay">
+          <div className="modal update-modal">
+            <div className="update-icon">🚀</div>
+
+            <h2>NEW UPDATE</h2>
+
+            <p>
+              Version {APP_VERSION} is now available.
+            </p>
+
+            <div className="update-list">
+              <div>✅ Tap reward ₹0.01</div>
+              <div>✅ Verified ad reward ₹0.25</div>
+              <div>✅ Maximum 100 ads/day</
