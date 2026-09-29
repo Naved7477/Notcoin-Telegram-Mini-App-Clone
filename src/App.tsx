@@ -189,3 +189,11 @@ const App = () => {
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                      </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+      
