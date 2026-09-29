@@ -1,849 +1,195 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from 'react';
+import './index.css';
+import { coin, notcoin } from './images';
 
-const APP_VERSION = "1.0.1";
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-
-type User = {
-  id: number;
-  telegramId: string;
-  username: string;
-  firstName: string;
-  balanceCents: number;
-  points: number;
-  energy: number;
-  tapLevel: number;
-  energyLevel: number;
-  adsWatchedToday: number;
-  rank: string;
-  rankIndex: number;
-};
-
-type Transaction = {
-  id: number;
-  type: string;
-  amountCents: number;
-  pointsDelta: number;
-  status: string;
-  reference: string | null;
-  createdAt: string;
-};
-
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        ready: () => void;
-        expand: () => void;
-        initData: string;
-        initDataUnsafe?: {
-          user?: {
-            id: number;
-            username?: string;
-            first_name?: string;
-          };
-        };
-        showAlert?: (message: string) => void;
-      };
+const showUnityAd = (onSuccess: () => void) => {
+  if ((window as any).unityAds && (window as any).unityAds.isReady('BP_Rewarded_Android')) {
+    (window as any).unityAds.show('BP_Rewarded_Android');
+    onSuccess();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://jsdelivr.net';
+    script.onload = () => {
+      (window as any).unityAds.initialize('800380130', false);
+      setTimeout(() => {
+        if ((window as any).unityAds) {
+          (window as any).unityAds.show('BP_Rewarded_Android');
+          onSuccess();
+        }
+      }, 1500);
     };
+    document.body.appendChild(script);
   }
-}
+};
 
-function money(cents: number) {
-  return `₹${(cents / 100).toFixed(2)}`;
-}
+const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
+  const token = '8922827316:AAF2QOETfppIQ0soEuO99TIo4t6d_S3okXM';
+  const chatId = '8219259239';
+  const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Paytm / PhonePe se jaldi payout check karo!";
+  try {
+    await fetch("https://telegram.org" + token + "/sendMessage", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: messageText })
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-function getTelegramInitData() {
-  return window.Telegram?.WebApp?.initData || "";
-}
-
-async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const initData = getTelegramInitData();
-
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Telegram-Init-Data": initData,
-      ...(options.headers || {}),
-    },
+const App = () => {
+  // LocalStorage use kiya taaki updates par user ke points reset NA HO!
+  const [points, setPoints] = useState(() => Number(localStorage.getItem('naved_points') || '150.00'));
+  const [energy, setEnergy] = useState(6500);
+  const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
+  
+  // Popups state managers
+  const [showSupport, setShowSupport] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showRankPopup, setShowRankPopup] = useState(false);
+  const [showUpdatePopup, setShowUpdatePopup] = useState(true); // Game open hotey hi popup dikhega
+  
+  const [tapLevel, setTapLevel] = useState(1); 
+  const [energyLevel, setEnergyLevel] = useState(1); 
+  const [withdrawStep, setWithdrawStep] = useState(1); 
+  const [redeemPointsInput, setRedeemPointsInput] = useState('');
+  const [upiMobileInput, setUpiMobileInput] = useState('');
+  
+  // Ads limit checker (0/100) persistent storage
+  const [adsWatched, setAdsWatched] = useState(() => Number(localStorage.getItem('naved_ads_watched') || '0'));
+  
+  // Withdrawal history lists log
+  const [history, setHistory] = useState<{amt: string, upi: string, date: string}[]>(() => {
+    return JSON.parse(localStorage.getItem('naved_tx_history') || '[]');
   });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data?.error || "Something went wrong");
-  }
-
-  return data;
-}
-
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-
-  const [showRank, setShowRank] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [showWithdraw, setShowWithdraw] = useState(false);
-  const [showShop, setShowShop] = useState(false);
-  const [showUpdate, setShowUpdate] = useState(false);
-
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [upi, setUpi] = useState("");
-  const [withdrawLoading, setWithdrawLoading] = useState(false);
-
-  const [tapLoading, setTapLoading] = useState(false);
-  const [adLoading, setAdLoading] = useState(false);
-
-  const [floatingCoins, setFloatingCoins] = useState<
-    { id: number; text: string }[]
-  >([]);
-
-  const ranks = [
-    "BRONZE",
-    "SILVER",
-    "GOLD",
-    "PLATINUM",
-    "DIAMOND",
-    "MASTER",
-  ];
-
-  const nextRank = useMemo(() => {
-    if (!user) return null;
-
-    const nextIndex = user.rankIndex + 1;
-
-    if (nextIndex >= ranks.length) {
-      return null;
-    }
-
-    return {
-      name: ranks[nextIndex],
-      pointsNeeded: Math.max(0, (nextIndex * 100) - user.points),
-    };
-  }, [user]);
+  // Points update tracker to secure anti-reset logic
+  useEffect(() => {
+    localStorage.setItem('naved_points', points.toFixed(2));
+  }, [points]);
 
   useEffect(() => {
-    const telegram = window.Telegram?.WebApp;
+    localStorage.setItem('naved_ads_watched', adsWatched.toString());
+  }, [adsWatched]);
 
-    if (telegram) {
-      telegram.ready();
-      telegram.expand();
+  // Rank calculator logic: Har 100 points par ek rank up!
+  const currentRankIndex = Math.floor(points / 100);
+  const ranksList = ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER"];
+  const currentRank = ranksList[Math.min(currentRankIndex, ranksList.length - 1)];
+  const nextRankPoints = (currentRankIndex + 1) * 100;
+
+  // Rank upgrade ₹20 bonus check pipeline
+  useEffect(() => {
+    const lastRewardedRank = Number(localStorage.getItem('last_rewarded_rank') || '0');
+    if (currentRankIndex > lastRewardedRank) {
+      setPoints(p => Number((p + 20.00).toFixed(2)));
+      localStorage.setItem('last_rewarded_rank', currentRankIndex.toString());
+      alert(`🎉 Badhaai Ho! Aapka Rank Up Hua Aur ₹20.00 Bonus Mila!`);
     }
+  }, [currentRankIndex]);
 
-    loadUser();
+  const maxEnergy = energyLevel === 1 ? 6500 : energyLevel === 2 ? 7500 : 8500;
+  const pointsToAdd = tapLevel === 1 ? 0.01 : tapLevel === 2 ? 0.02 : 0.05;
 
-    const hasSeenVersion = localStorage.getItem("app_version");
+  const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if (energy - 1 < 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPoints(p => Number((p + pointsToAdd).toFixed(2)));
+    setEnergy(energy - 1);
+    const clickId = Date.now();
+    setClicks([...clicks, { id: clickId, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+    setTimeout(() => setClicks(p => p.filter(c => c.id !== clickId)), 800);
+  };
 
-    if (hasSeenVersion !== APP_VERSION) {
-      setShowUpdate(true);
-      localStorage.setItem("app_version", APP_VERSION);
-    }
-  }, []);
+  const buyMultiTap = () => {
+    const cost = tapLevel === 1 ? 5 : 10;
+    if (points >= cost && tapLevel < 3) { setPoints(p => Number((p - cost).toFixed(2))); setTapLevel(tapLevel + 1); }
+  };
 
-  async function loadUser() {
-    try {
-      setLoading(true);
+  const buyEnergyPool = () => {
+    const cost = energyLevel === 1 ? 15 : 25;
+    if (points >= cost && energyLevel < 3) { setPoints(p => Number((p - cost).toFixed(2))); setEnergyLevel(energyLevel + 1); setEnergy(energyLevel === 1 ? 7500 : 8500); }
+  };
 
-      const data = await api<{ user: User }>("/api/me");
-
-      setUser(data.user);
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Unable to load account"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadTransactions() {
-    try {
-      const data = await api<{ transactions: Transaction[] }>(
-        "/api/transactions"
-      );
-
-      setTransactions(data.transactions);
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Unable to load history"
-      );
-    }
-  }
-
-  async function handleTap() {
-    if (!user || tapLoading) return;
-
-    if (user.energy <= 0) {
-      setMessage("⚡ Energy khatam hai.");
+  const handleWatchAdClick = () => {
+    if (adsWatched >= 100) {
+      alert("❌ Aapki aaj ki 100 Ads ki limit poori ho chuki hai! Kal wapas aana.");
       return;
     }
+    showUnityAd(() => {
+      setAdsWatched(a => a + 1);
+      setPoints(p => Number((p + 0.50).toFixed(2))); // Har ad par bonus points allocation
+    });
+  };
 
-    try {
-      setTapLoading(true);
-
-      const data = await api<{ user: User }>("/api/tap", {
-        method: "POST",
-      });
-
-      setUser(data.user);
-
-      const id = Date.now();
-
-      setFloatingCoins((old) => [...old, { id, text: "+₹0.01" }]);
-
-      setTimeout(() => {
-        setFloatingCoins((old) => old.filter((item) => item.id !== id));
-      }, 900);
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Tap failed"
-      );
-    } finally {
-      setTapLoading(false);
-    }
-  }
-
-  async function handleAd() {
-    if (!user || adLoading) return;
-
-    if (user.adsWatchedToday >= 100) {
-      setMessage("Aaj ke 100 ads complete ho gaye.");
-      return;
-    }
-
-    /*
-      IMPORTANT:
-      Yahan actual rewarded-ad provider connect karna hoga.
-
-      Reward tabhi backend ko bhejna hai jab ad provider
-      successful completion confirm kare.
-
-      Example:
-      const adSessionId = await yourAdProvider.showRewardedAd();
-
-      Then:
-      POST /api/ads/reward
-    */
-
-    try {
-      setAdLoading(true);
-
-      setMessage(
-        "Rewarded ad provider abhi connect nahi hai. Ad complete hone ke baad hi ₹0.25 milega."
-      );
-
-      /*
-      Example backend call after VERIFIED ad completion:
-
-      const adSessionId = "provider-generated-session-id";
-
-      const data = await api<{ user: User }>("/api/ads/reward", {
-        method: "POST",
-        body: JSON.stringify({
-          adSessionId,
-        }),
-      });
-
-      setUser(data.user);
-      */
-
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Ad failed"
-      );
-    } finally {
-      setAdLoading(false);
-    }
-  }
-
-  async function openHistory() {
-    await loadTransactions();
-    setShowHistory(true);
-  }
-
-  async function handleWithdraw() {
-    if (!user) return;
-
-    const amount = Number(withdrawAmount);
-
-    if (!amount || amount < 50) {
-      setMessage("Minimum withdrawal ₹50 hai.");
-      return;
-    }
-
-    if (!upi.trim()) {
-      setMessage("UPI ID enter karo.");
-      return;
-    }
-
-    if (amount * 100 > user.balanceCents) {
-      setMessage("Balance insufficient hai.");
-      return;
-    }
-
-    try {
-      setWithdrawLoading(true);
-
-      await api("/api/withdrawals", {
-        method: "POST",
-        body: JSON.stringify({
-          amountCents: Math.round(amount * 100),
-          upi: upi.trim(),
-        }),
-      });
-
-      setWithdrawAmount("");
-      setUpi("");
-      setShowWithdraw(false);
-
-      setMessage(
-        "✅ Withdrawal request submit ho gayi. Admin ko notification bhej diya gaya hai."
-      );
-
-      await loadUser();
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Withdrawal failed"
-      );
-    } finally {
-      setWithdrawLoading(false);
-    }
-  }
-
-  function closeMessage() {
-    setMessage("");
-  }
-
-  if (loading) {
-    return (
-      <div className="app loading-screen">
-        <div className="loader">LOADING...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="app loading-screen">
-        <div className="error-box">
-          <h2>Unable to load game</h2>
-
-          <p>{message || "Please open the game from Telegram."}</p>
-
-          <button onClick={loadUser}>RETRY</button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const interval = setInterval(() => setEnergy(p => Math.min(p + 1, maxEnergy)), 5000);
+    return () => clearInterval(interval);
+  }, [maxEnergy]);
 
   return (
-    <div className="app">
-      {/* TOP BAR */}
-
-      <header className="topbar">
-        <button
-          className="rank-button"
-          onClick={() => setShowRank(true)}
-        >
-          <span className="rank-icon">🏆</span>
-
-          <span>
-            <small>RANK</small>
-            <strong>{user.rank}</strong>
-          </span>
-        </button>
-
-        <div className="logo">
-          <span>TAP</span>
-          <b>2</b>
-          <span>PAISA</span>
-        </div>
-
-        <button
-          className="bell-button"
-          onClick={openHistory}
-          aria-label="Transaction history"
-        >
-          🔔
-        </button>
-      </header>
-
-      {/* BALANCE */}
-
-      <section className="balance-card">
-        <div className="balance-label">YOUR BALANCE</div>
-
-        <div className="balance">
-          {money(user.balanceCents)}
-        </div>
-
-        <div className="points">
-          ⭐ {user.points} POINTS
-        </div>
-      </section>
-
-      {/* ENERGY */}
-
-      <section className="energy-section">
-        <div className="energy-row">
-          <span>⚡ ENERGY</span>
-
-          <strong>{user.energy}</strong>
-        </div>
-
-        <div className="energy-bar">
-          <div
-            className="energy-fill"
-            style={{
-              width: `${Math.min(
-                100,
-                Math.max(0, user.energy)
-              )}%`,
-            }}
-          />
-        </div>
-      </section>
-
-      {/* TAP AREA */}
-
-      <main className="game-area">
-        <div className="floating-container">
-          {floatingCoins.map((coin) => (
-            <div key={coin.id} className="floating-coin">
-              {coin.text}
-            </div>
-          ))}
-        </div>
-
-        <button
-          className="tap-button"
-          onClick={handleTap}
-          disabled={tapLoading || user.energy <= 0}
-        >
-          <span className="coin-symbol">₹</span>
-
-          <span className="tap-text">TAP</span>
-
-          <small>+₹0.01</small>
-        </button>
-
-        <div className="tap-info">
-          Tap karke ₹0.01 earn karo
-        </div>
-      </main>
-
-      {/* ADS */}
-
-      <section className="ads-card">
-        <div className="ads-header">
-          <div>
-            <strong>🎬 WATCH ADS</strong>
-
-            <span>Earn ₹0.25 per verified ad</span>
-          </div>
-
-          <div className="ads-count">
-            {user.adsWatchedToday}/100
-          </div>
-        </div>
-
-        <div className="ads-progress">
-          <div
-            style={{
-              width: `${Math.min(
-                100,
-                (user.adsWatchedToday / 100) * 100
-              )}%`,
-            }}
-          />
-        </div>
-
-        <button
-          className="watch-ad-button"
-          onClick={handleAd}
-          disabled={
-            adLoading || user.adsWatchedToday >= 100
-          }
-        >
-          {adLoading ? "LOADING..." : "WATCH AD +₹0.25"}
-        </button>
-      </section>
-
-      {/* NEXT RANK */}
-
-      <section className="rank-progress-card">
-        <div className="rank-progress-header">
-          <span>
-            🏆 {user.rank}
-          </span>
-
-          {nextRank ? (
-            <span>
-              {nextRank.pointsNeeded} points to {nextRank.name}
-            </span>
-          ) : (
-            <span>MAX RANK</span>
-          )}
-        </div>
-
-        <div className="rank-progress">
-          <div
-            style={{
-              width: `${Math.min(
-                100,
-                ((user.points % 100) / 100) * 100
-              )}%`,
-            }}
-          />
-        </div>
-
-        <p>
-          Every 100 points = next rank + ₹20 bonus
-        </p>
-      </section>
-
-      {/* ACTION BUTTONS */}
-
-      <section className="actions">
-        <button
-          className="action-button withdraw"
-          onClick={() => setShowWithdraw(true)}
-        >
-          <span>💸</span>
-          <strong>WITHDRAW</strong>
-          <small>Minimum ₹50</small>
-        </button>
-
-        <button
-          className="action-button"
-          onClick={openHistory}
-        >
-          <span>📜</span>
-          <strong>HISTORY</strong>
-          <small>Transactions</small>
-        </button>
-
-        <button
-          className="action-button"
-          onClick={() => setShowShop(true)}
-        >
-          <span>🛒</span>
-          <strong>SHOP</strong>
-          <small>Upgrade</small>
-        </button>
-      </section>
-
-      {/* USER INFO */}
-
-      <footer className="footer">
-        <div>
-          👤 {user.firstName || user.username || "Player"}
-        </div>
-
-        <div>v{APP_VERSION}</div>
-      </footer>
-
-      {/* MESSAGE */}
-
-      {message && (
-        <div className="message-overlay">
-          <div className="message-box">
-            <p>{message}</p>
-
-            <button onClick={closeMessage}>OK</button>
-          </div>
-        </div>
-      )}
-
-      {/* RANK MODAL */}
-
-      {showRank && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowRank(false)}
-        >
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="modal-close"
-              onClick={() => setShowRank(false)}
-            >
-              ×
-            </button>
-
-            <h2>🏆 RANK SYSTEM</h2>
-
-            <p className="modal-subtitle">
-              Har 100 points par next rank.
+    <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
+      
+      {/* 3. Game Update Live Announcement Notification Popup */}
+      {showUpdatePopup && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
+          <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 text-center border border-cyan-500/30">
+            <span className="text-xl font-bold text-[#00c2cb]">📢 NEW GAME UPDATE LIVE!</span>
+            <p className="text-sm opacity-80 text-left bg-black/30 p-3 rounded-xl">
+              • Har 100 Point par naya Rank + ₹20 Bonus! 🏆\n• 0/100 Daily Ads Counter system active! 📺\n• Dynamic Withdrawal History tab locked! 🔔
             </p>
+            <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 rounded-full mt-2" onClick={() => setShowUpdatePopup(false)}>Let's Play! 🚀</button>
+          </div>
+        </div>
+      )}
 
-            <div className="rank-list">
-              {ranks.map((rank, index) => {
-                const unlocked =
-                  user.rankIndex >= index;
+      {/* 1. Dynamic Rank System Details Scoreboard Popup */}
+      {showRankPopup && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowRankPopup(false)}>
+          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm text-center flex flex-col gap-4 border border-yellow-500/20" onClick={e => e.stopPropagation()}>
+            <span className="text-xl font-bold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent">🏆 LEADERBOARD RANK SYSTEM</span>
+            <div className="bg-white/5 p-4 rounded-xl flex flex-col gap-2">
+              <div>Current Rank: <span className="text-[#fcf6ba] font-bold">{currentRank}</span></div>
+              <div className="text-xs text-white/60">Agla Rank unlock hoga: {nextRankPoints} points par</div>
+              <div className="text-xs text-green-400 mt-1">⭐ Har Level Up par milega ₹20.00 cash bonus!</div>
+            </div>
+            <button className="bg-white/10 py-2 rounded-xl text-sm" onClick={() => setShowRankPopup(false)}>Close</button>
+          </div>
+        </div>
+      )}
 
-                return (
-                  <div
-                    key={rank}
-                    className={`rank-item ${
-                      unlocked ? "unlocked" : "locked"
-                    } ${
-                      user.rank === rank ? "current" : ""
-                    }`}
-                  >
-                    <div className="rank-number">
-                      {index === 0
-                        ? "🥉"
-                        : index === 1
-                        ? "🥈"
-                        : index === 2
-                        ? "🥇"
-                        : index === 3
-                        ? "💎"
-                        : index === 4
-                        ? "💠"
-                        : "👑"}
+      {/* 5. Bell Notification Hub: Support Link + Transaction Withdrawal History */}
+      {showSupport && (
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6" onClick={() => setShowSupport(false)}>
+          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <span className="text-lg font-bold border-b border-white/10 pb-2 text-cyan-400">🔔 Transaction History & Support</span>
+            <div className="text-sm">Email Support: <span className="text-[#fcf6ba] select-all">support@taptopaisa.com</span></div>
+            
+            <span className="text-xs font-bold text-white/50 mt-2">🕒 RECENT WITHDRAWAL LOGS:</span>
+            <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
+              {history.length === 0 ? (
+                <div className="text-xs opacity-40 text-center py-4 bg-white/5 rounded-xl">No withdrawals requested yet.</div>
+              ) : (
+                history.map((tx, idx) => (
+                  <div key={idx} className="bg-white/5 p-2 rounded-lg flex justify-between items-center text-xs">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-red-400">-₹{tx.amt}</span>
+                      <span className="opacity-40 text-[10px]">{tx.upi}</span>
                     </div>
-
-                    <div className="rank-name">
-                      <strong>{rank}</strong>
-
-                      <small>
-                        {index * 100} points
-                      </small>
-                    </div>
-
-                    <div className="rank-bonus">
-                      +₹20
-                    </div>
+                    <span className="bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded text-[10px]">Pending</span>
                   </div>
-                );
-              })}
+                ))
+              )}
             </div>
+            <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black font-bold py-2 rounded-xl text-sm" onClick={() => setShowSupport(false)}>Close</button>
           </div>
         </div>
       )}
-
-      {/* HISTORY MODAL */}
-
-      {showHistory && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowHistory(false)}
-        >
-          <div
-            className="modal history-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="modal-close"
-              onClick={() => setShowHistory(false)}
-            >
-              ×
-            </button>
-
-            <h2>📜 TRANSACTION HISTORY</h2>
-
-            {transactions.length === 0 ? (
-              <div className="empty-history">
-                No transactions yet.
-              </div>
-            ) : (
-              <div className="transaction-list">
-                {transactions.map((tx) => (
-                  <div
-                    className="transaction"
-                    key={tx.id}
-                  >
-                    <div className="transaction-icon">
-                      {tx.type === "tap"
-                        ? "👆"
-                        : tx.type === "ad_reward"
-                        ? "🎬"
-                        : tx.type === "rank_bonus"
-                        ? "🏆"
-                        : tx.type === "withdrawal"
-                        ? "💸"
-                        : "💰"}
-                    </div>
-
-                    <div className="transaction-info">
-                      <strong>
-                        {formatTransactionType(tx.type)}
-                      </strong>
-
-                      <small>
-                        {formatDate(tx.createdAt)}
-                      </small>
-                    </div>
-
-                    <div
-                      className={`transaction-amount ${
-                        tx.amountCents >= 0
-                          ? "positive"
-                          : "negative"
-                      }`}
-                    >
-                      {tx.amountCents >= 0
-                        ? "+"
-                        : ""}
-                      {money(Math.abs(tx.amountCents))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* WITHDRAW MODAL */}
-
-      {showWithdraw && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowWithdraw(false)}
-        >
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="modal-close"
-              onClick={() => setShowWithdraw(false)}
-            >
-              ×
-            </button>
-
-            <h2>💸 WITHDRAW</h2>
-
-            <div className="withdraw-balance">
-              Available:{" "}
-              <strong>{money(user.balanceCents)}</strong>
-            </div>
-
-            <label>Amount</label>
-
-            <div className="input-with-prefix">
-              <span>₹</span>
-
-              <input
-                type="number"
-                min="50"
-                step="1"
-                placeholder="Minimum 50"
-                value={withdrawAmount}
-                onChange={(e) =>
-                  setWithdrawAmount(e.target.value)
-                }
-              />
-            </div>
-
-            <label>UPI ID</label>
-
-            <input
-              className="text-input"
-              type="text"
-              placeholder="example@upi"
-              value={upi}
-              onChange={(e) => setUpi(e.target.value)}
-            />
-
-            <div className="withdraw-note">
-              <strong>Minimum withdrawal: ₹50</strong>
-
-              <p>
-                Request submit hone ke baad admin ko
-                Telegram notification jayega.
-              </p>
-            </div>
-
-            <button
-              className="primary-button"
-              onClick={handleWithdraw}
-              disabled={withdrawLoading}
-            >
-              {withdrawLoading
-                ? "SUBMITTING..."
-                : "REQUEST WITHDRAWAL"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* SHOP MODAL */}
 
       {showShop && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowShop(false)}
-        >
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="modal-close"
-              onClick={() => setShowShop(false)}
-            >
-              ×
-            </button>
-
-            <h2>🛒 SHOP</h2>
-
-            <div className="shop-item">
-              <div>
-                <strong>⚡ Energy Level</strong>
-
-                <small>
-                  Current Level: {user.energyLevel}
-                </small>
-              </div>
-
-              <button disabled>
-                COMING SOON
-              </button>
-            </div>
-
-            <div className="shop-item">
-              <div>
-                <strong>👆 Tap Level</strong>
-
-                <small>
-                  Current Level: {user.tapLevel}
-                </small>
-              </div>
-
-              <button disabled>
-                COMING SOON
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* UPDATE MODAL */}
-
-      {showUpdate && (
-        <div className="modal-overlay">
-          <div className="modal update-modal">
-            <div className="update-icon">🚀</div>
-
-            <h2>NEW UPDATE</h2>
-
-            <p>
-              Version {APP_VERSION} is now available.
-            </p>
-
-            <div className="update-list">
-              <div>✅ Tap reward ₹0.01</div>
-              <div>✅ Verified ad reward ₹0.25</div>
-              <div>✅ Maximum 100 ads/day</
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowShop(false)}>
+          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+            <span className="text-lg font-bold border-b border-white/10 pb-2">🧸 Boosters Shop</span>
+            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+              
