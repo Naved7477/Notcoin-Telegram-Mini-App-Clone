@@ -43,7 +43,7 @@ const App = () => {
   
   const [showSupport, setShowSupport] = useState(false);
   const [showShop, setShowShop] = useState(false);
-  const [showWithdraw, setShowWithdraw[ = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
   const [showRankPopup, setShowRankPopup] = useState(false);
   const [showUpdatePopup, setShowUpdatePopup] = useState(true);
   
