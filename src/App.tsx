@@ -120,8 +120,7 @@ const App = () => {
     const interval = setInterval(() => setEnergy(p => Math.min(p + 1, maxEnergy)), 5000);
     return () => clearInterval(interval);
   }, [maxEnergy]);
-
-  return (
+    return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
       
       {showUpdatePopup && (
@@ -188,4 +187,72 @@ const App = () => {
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-              
+              <div className="flex flex-col"><span className="text-sm font-bold">⚡ Energy Pool (Lvl {energyLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{energyLevel === 1 ? '15.00' : energyLevel === 2 ? '25.00' : 'MAX'}</span></div>
+              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyEnergyPool}>Upgrade</button>
+            </div>
+            <button className="bg-white/10 py-2 rounded-xl text-sm" onClick={() => setShowShop(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {showWithdraw && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => { setShowWithdraw(false); setWithdrawStep(1); }}>
+          <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col relative" onClick={e => e.stopPropagation()}>
+            <div className="absolute top-4 left-4 cursor-pointer text-xl opacity-60" onClick={() => withdrawStep === 2 ? setWithdrawStep(1) : setShowWithdraw(false)}>↩</div>
+            {withdrawStep === 1 ? (
+              <div className="flex flex-col gap-5 pt-4 text-center">
+                <h3 className="text-xl font-bold">How much you<br/>want to Redeem?</h3>
+                <input type="number" placeholder="Min 50" value={redeemPointsInput} onChange={e => setRedeemPointsInput(e.target.value)} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center font-bold text-[#fcf6ba] outline-none" />
+                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => parseFloat(redeemPointsInput) >= 50 && parseFloat(redeemPointsInput) <= points ? setWithdrawStep(2) : alert("Check Balance (Min ₹50)")}>Proceed to Redeem</button>
+                <div className="text-xs opacity-50">Available Balance: ₹{points.toFixed(2)}</div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5 pt-4 text-center">
+                <h3 className="text-xl font-bold">Redeem Your Reward</h3>
+                <p className="text-xs opacity-50">Enter mobile number linked to UPI</p>
+                <input type="tel" maxLength={10} placeholder="Enter mobile number" value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value.replace(/\D/g, ''))} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center outline-none" />
+                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => { 
+                  if(upiMobileInput.length === 10) { 
+                    const finalAmt = redeemPointsInput; 
+                    setPoints(p => Number((p - parseFloat(finalAmt)).toFixed(2))); 
+                    sendWithdrawalAlertToAdmin(finalAmt, upiMobileInput); 
+                    
+                    const newTx = { amt: finalAmt, upi: upiMobileInput, date: new Date().toLocaleDateString() };
+                    const updatedHistory = [newTx, ...history];
+                    setHistory(updatedHistory);
+                    localStorage.setItem('naved_tx_history', JSON.stringify(updatedHistory));
+
+                    alert("Withdrawal Request Sent! Admin will check."); 
+                    setShowWithdraw(false); 
+                    setWithdrawStep(1); 
+                    setRedeemPointsInput(''); 
+                    setUpiMobileInput(''); 
+                  } 
+                }}>Confirm & Withdraw</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="w-full z-10 flex flex-col items-center flex-grow justify-between pb-8">
+        <div className="w-full flex flex-col items-center pt-8">
+          <div className="w-full flex justify-between items-center px-4">
+            <span className="text-sm font-bold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent cursor-pointer border border-white/10 px-3 py-1 rounded-full bg-white/5 active:scale-95 transition-transform" onClick={() => setShowRankPopup(true)}>🏆 {currentRank}</span>
+            <div className="cursor-pointer text-xl bg-white/5 p-2 rounded-full active:scale-95 transition-transform relative" onClick={() => setShowSupport(true)}>🔔<span className="absolute -top-1 -right-1 bg-cyan-500 w-2 h-2 rounded-full"></span></div>
+          </div>
+          <div className="mt-12 flex items-center gap-3">
+            <img src={coin} width={48} height={48} />
+            <span className="text-5xl font-extrabold tracking-tight">{points.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div className="w-64 h-64 rounded-full bg-gradient-to-b from-[#bf953f] to-[#b38728] p-2 active:scale-95 transition-transform cursor-pointer" onClick={handleClick}>
+          <div className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center overflow-hidden">
+            <img src={notcoin} width={192} height={192} />
+          </div>
+        </div>
+
+        <div className="w-full flex flex-col gap-4 px-4">
+          
+    
