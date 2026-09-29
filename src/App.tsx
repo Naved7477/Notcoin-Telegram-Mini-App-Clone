@@ -253,5 +253,20 @@ const App = () => {
 
         <div className="w-full flex flex-col gap-4 px-4">
           <span className="text-sm opacity-60">Energy: {energy} / {maxEnergy}</span>
+          <div className="grid grid-cols-3 gap-2 mt-2 bg-white/5 p-2 rounded-2xl border border-white/5">
+            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowShop(true)}><span className="text-xl">🧸</span><span className="text-xs mt-1 font-semibold opacity-80">Shop</span></div>
+            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 border border-cyan-500/20" onClick={handleWatchAdClick}>
+              <img src={coin} width={20} height={20} />
+              <span className="text-[11px] mt-1 font-bold text-cyan-400">Ads: {adsWatched}/100</span>
+            </div>
+            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowWithdraw(true)}><span className="text-xl">🚀</span><span className="text-xs mt-1 font-semibold opacity-80">Withdrawal</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
 
 
