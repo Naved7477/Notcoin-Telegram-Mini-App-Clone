@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import './index.css';
 import { coin, notcoin } from './images';
-
 const showUnityAd = (onSuccess: () => void) => {
   if ((window as any).unityAds && (window as any).unityAds.isReady && (window as any).unityAds.isReady('BP_Rewarded_Android')) {
     (window as any).unityAds.show('BP_Rewarded_Android');
