@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import './index.css';
 import { coin, notcoin } from './images';
+
 const showUnityAd = (onSuccess: () => void) => {
   if ((window as any).unityAds && (window as any).unityAds.isReady && (window as any).unityAds.isReady('BP_Rewarded_Android')) {
     (window as any).unityAds.show('BP_Rewarded_Android');
@@ -22,12 +23,11 @@ const showUnityAd = (onSuccess: () => void) => {
 };
 
 const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
-  // NAVED BHAI YAHAN AAPKA NAYA TOKEN SET KAR DIYA HAI
   const token = '8922827316:AAGHwwIIkiJcSyJQhu-D1RINI_8pC9bU9cw';
   const chatId = '8219259239';
   const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Paytm / PhonePe se jaldi payout check karo!";
   try {
-   await fetch("https://telegram.org" + token + "/sendMessage", { 
+    await fetch("https://telegram.org" + token + "/sendMessage", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text: messageText })
@@ -128,12 +128,12 @@ const App = () => {
         <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
           <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 text-center border border-cyan-500/30">
             <span className="text-xl font-bold text-[#00c2cb]">📢 NEW GAME UPDATE LIVE!</span>
-                     <p className="text-sm opacity-80 text-left bg-black/30 p-3 rounded-xl flex flex-col gap-1">
+            <div className="text-sm opacity-80 text-left bg-black/30 p-3 rounded-xl flex flex-col gap-1">
               <span>• Har 100 Point par naya Rank + ₹20 Bonus! 🏆</span>
               <span>• 0/100 Daily Ads Counter system active! 📺</span>
               <span>• Dynamic Withdrawal History tab locked! 🔔</span>
-            </p>
-          
+            </div>
+            <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 rounded-full mt-2" onClick={() => setShowUpdatePopup(false)}>Let's Play! 🚀</button>
           </div>
         </div>
       )}
@@ -188,11 +188,3 @@ const App = () => {
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-                      </div>
-      </div>
-    </div>
-  );
-};
-
-export default App;
-      
