@@ -3,7 +3,7 @@ import './index.css';
 import { coin, notcoin } from './images';
 
 const showUnityAd = (onSuccess: () => void) => {
-  if ((window as any).unityAds && (window as any).unityAds.isReady('BP_Rewarded_Android')) {
+  if ((window as any).unityAds && (window as any).unityAds.isReady && (window as any).unityAds.isReady('BP_Rewarded_Android')) {
     (window as any).unityAds.show('BP_Rewarded_Android');
     onSuccess();
   } else {
@@ -38,17 +38,15 @@ const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
 };
 
 const App = () => {
-  // LocalStorage use kiya taaki updates par user ke points reset NA HO!
   const [points, setPoints] = useState(() => Number(localStorage.getItem('naved_points') || '150.00'));
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   
-  // Popups state managers
   const [showSupport, setShowSupport] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showRankPopup, setShowRankPopup] = useState(false);
-  const [showUpdatePopup, setShowUpdatePopup] = useState(true); // Game open hotey hi popup dikhega
+  const [showUpdatePopup, setShowUpdatePopup] = useState(true);
   
   const [tapLevel, setTapLevel] = useState(1); 
   const [energyLevel, setEnergyLevel] = useState(1); 
@@ -56,15 +54,12 @@ const App = () => {
   const [redeemPointsInput, setRedeemPointsInput] = useState('');
   const [upiMobileInput, setUpiMobileInput] = useState('');
   
-  // Ads limit checker (0/100) persistent storage
   const [adsWatched, setAdsWatched] = useState(() => Number(localStorage.getItem('naved_ads_watched') || '0'));
   
-  // Withdrawal history lists log
   const [history, setHistory] = useState<{amt: string, upi: string, date: string}[]>(() => {
     return JSON.parse(localStorage.getItem('naved_tx_history') || '[]');
   });
 
-  // Points update tracker to secure anti-reset logic
   useEffect(() => {
     localStorage.setItem('naved_points', points.toFixed(2));
   }, [points]);
@@ -73,19 +68,17 @@ const App = () => {
     localStorage.setItem('naved_ads_watched', adsWatched.toString());
   }, [adsWatched]);
 
-  // Rank calculator logic: Har 100 points par ek rank up!
   const currentRankIndex = Math.floor(points / 100);
   const ranksList = ["BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER"];
   const currentRank = ranksList[Math.min(currentRankIndex, ranksList.length - 1)];
   const nextRankPoints = (currentRankIndex + 1) * 100;
 
-  // Rank upgrade ₹20 bonus check pipeline
   useEffect(() => {
     const lastRewardedRank = Number(localStorage.getItem('last_rewarded_rank') || '0');
     if (currentRankIndex > lastRewardedRank) {
       setPoints(p => Number((p + 20.00).toFixed(2)));
       localStorage.setItem('last_rewarded_rank', currentRankIndex.toString());
-      alert(`🎉 Badhaai Ho! Aapka Rank Up Hua Aur ₹20.00 Bonus Mila!`);
+      alert("🎉 Badhaai Ho! Aapka Rank Up Hua Aur ₹20.00 Bonus Mila!");
     }
   }, [currentRankIndex]);
 
@@ -119,7 +112,7 @@ const App = () => {
     }
     showUnityAd(() => {
       setAdsWatched(a => a + 1);
-      setPoints(p => Number((p + 0.50).toFixed(2))); // Har ad par bonus points allocation
+      setPoints(p => Number((p + 0.50).toFixed(2))); 
     });
   };
 
@@ -131,20 +124,18 @@ const App = () => {
   return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
       
-      {/* 3. Game Update Live Announcement Notification Popup */}
       {showUpdatePopup && (
         <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
           <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 text-center border border-cyan-500/30">
             <span className="text-xl font-bold text-[#00c2cb]">📢 NEW GAME UPDATE LIVE!</span>
             <p className="text-sm opacity-80 text-left bg-black/30 p-3 rounded-xl">
-              • Har 100 Point par naya Rank + ₹20 Bonus! 🏆\n• 0/100 Daily Ads Counter system active! 📺\n• Dynamic Withdrawal History tab locked! 🔔
+              • Har 100 Point par naya Rank + ₹20 Bonus! 🏆{"\n"}• 0/100 Daily Ads Counter system active! 📺{"\n"}• Dynamic Withdrawal History tab locked! 🔔
             </p>
             <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 rounded-full mt-2" onClick={() => setShowUpdatePopup(false)}>Let's Play! 🚀</button>
           </div>
         </div>
       )}
 
-      {/* 1. Dynamic Rank System Details Scoreboard Popup */}
       {showRankPopup && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowRankPopup(false)}>
           <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm text-center flex flex-col gap-4 border border-yellow-500/20" onClick={e => e.stopPropagation()}>
@@ -159,7 +150,6 @@ const App = () => {
         </div>
       )}
 
-      {/* 5. Bell Notification Hub: Support Link + Transaction Withdrawal History */}
       {showSupport && (
         <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6" onClick={() => setShowSupport(false)}>
           <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -191,5 +181,9 @@ const App = () => {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setShowShop(false)}>
           <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm flex flex-col gap-4" onClick={e => e.stopPropagation()}>
             <span className="text-lg font-bold border-b border-white/10 pb-2">🧸 Boosters Shop</span>
+            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+              <div className="flex flex-col"><span className="text-sm font-bold">👆 Multi-Tap (Lvl {tapLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{tapLevel === 1 ? '5.00' : tapLevel === 2 ? '10.00' : 'MAX'}</span></div>
+              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
+            </div>
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
               
