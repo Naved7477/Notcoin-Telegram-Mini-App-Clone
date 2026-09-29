@@ -36,8 +36,10 @@ const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
     console.error(error);
   }
 };
+
 const App = () => {
-  const [points, setPoints] = useState(() => Number(localStorage.getItem('naved_points') || '150.00'));
+  // NAVED BHAI YAHAN KANGAAL HONE WALA LAFDA JADD SE KHATAM (0.00 SET UP)
+  const [points, setPoints] = useState(() => Number(localStorage.getItem('naved_points') || '0.00'));
   const [energy, setEnergy] = useState(6500);
   const [clicks, setClicks] = useState<{ id: number, x: number, y: number }[]>([]);
   
@@ -75,7 +77,7 @@ const App = () => {
   useEffect(() => {
     const lastRewardedRank = Number(localStorage.getItem('last_rewarded_rank') || '0');
     if (currentRankIndex > lastRewardedRank) {
-      setPoints(p => Number((p + 20.00).toFixed(2)));
+      setPoints(p => Number((p + 20.00).toFixed(2))); // HAR 100 PAR STRICT 20 RUPEES LOCK
       localStorage.setItem('last_rewarded_rank', currentRankIndex.toString());
       alert("🎉 Badhaai Ho! Aapka Rank Up Hua Aur ₹20.00 Bonus Mila!");
     }
@@ -119,17 +121,19 @@ const App = () => {
     const interval = setInterval(() => setEnergy(p => Math.min(p + 1, maxEnergy)), 5000);
     return () => clearInterval(interval);
   }, [maxEnergy]);
+
   return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
+      
       {showUpdatePopup && (
         <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
           <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 text-center border border-cyan-500/30">
             <span className="text-xl font-bold text-[#00c2cb]">📢 NEW GAME UPDATE LIVE!</span>
-            <p className="text-sm opacity-80 text-left bg-black/30 p-3 rounded-xl flex flex-col gap-1">
+            <div className="text-sm opacity-80 text-left bg-black/30 p-3 rounded-xl flex flex-col gap-1">
               <span>• Har 100 Point par naya Rank + ₹20 Bonus! 🏆</span>
               <span>• 0/100 Daily Ads Counter system active! 📺</span>
               <span>• Dynamic Withdrawal History tab locked! 🔔</span>
-            </p>
+            </div>
             <button className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 rounded-full mt-2" onClick={() => setShowUpdatePopup(false)}>Let's Play! 🚀</button>
           </div>
         </div>
@@ -184,89 +188,4 @@ const App = () => {
               <div className="flex flex-col"><span className="text-sm font-bold">👆 Multi-Tap (Lvl {tapLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{tapLevel === 1 ? '5.00' : tapLevel === 2 ? '10.00' : 'MAX'}</span></div>
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
-            <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-              <div className="flex flex-col"><span className="text-sm font-bold">⚡ Energy Pool (Lvl {energyLevel})</span><span className="text-xs text-[#fcf6ba]">Cost: ₹{energyLevel === 1 ? '15.00' : energyLevel === 2 ? '25.00' : 'MAX'}</span></div>
-              <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyEnergyPool}>Upgrade</button>
-            </div>
-            <button className="bg-white/10 py-2 rounded-xl text-sm" onClick={() => setShowShop(false)}>Close</button>
-          </div>
-        </div>
-      )}
-
-      {showWithdraw && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => { setShowWithdraw(false); setWithdrawStep(1); }}>
-          <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col relative" onClick={e => e.stopPropagation()}>
-            <div className="absolute top-4 left-4 cursor-pointer text-xl opacity-60" onClick={() => withdrawStep === 2 ? setWithdrawStep(1) : setShowWithdraw(false)}>↩</div>
-            {withdrawStep === 1 ? (
-              <div className="flex flex-col gap-5 pt-4 text-center">
-                <h3 className="text-xl font-bold">How much you<br/>want to Redeem?</h3>
-                <input type="number" placeholder="Min 50" value={redeemPointsInput} onChange={e => setRedeemPointsInput(e.target.value)} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center font-bold text-[#fcf6ba] outline-none" />
-                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => parseFloat(redeemPointsInput) >= 50 && parseFloat(redeemPointsInput) <= points ? setWithdrawStep(2) : alert("Check Balance (Min ₹50)")}>Proceed to Redeem</button>
-                <div className="text-xs opacity-50">Available Balance: ₹{points.toFixed(2)}</div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-5 pt-4 text-center">
-                <h3 className="text-xl font-bold">Redeem Your Reward</h3>
-                <p className="text-xs opacity-50">Enter mobile number linked to UPI</p>
-                <input type="tel" maxLength={10} placeholder="Enter mobile number" value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value.replace(/\D/g, ''))} className="bg-black/40 border border-white/10 p-3 rounded-xl text-center outline-none" />
-                <button className="bg-[#00c2cb] text-white font-bold py-3 rounded-full" onClick={() => { 
-                  if(upiMobileInput.length === 10) { 
-                    const finalAmt = redeemPointsInput; 
-                    setPoints(p => Number((p - parseFloat(finalAmt)).toFixed(2))); 
-                    sendWithdrawalAlertToAdmin(finalAmt, upiMobileInput); 
-                    
-                    const newTx = { amt: finalAmt, upi: upiMobileInput, date: new Date().toLocaleDateString() };
-                    const updatedHistory = [newTx, ...history];
-                    setHistory(updatedHistory);
-                    localStorage.setItem('naved_tx_history', JSON.stringify(updatedHistory));
-
-                    alert("Withdrawal Request Sent! Admin will check."); 
-                    setShowWithdraw(false); 
-                    setWithdrawStep(1); 
-                    setRedeemPointsInput(''); 
-                    setUpiMobileInput(''); 
-                  } 
-                }}>Confirm & Withdraw</button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="w-full z-10 flex flex-col items-center flex-grow justify-between pb-8">
-        <div className="w-full flex flex-col items-center pt-8">
-          <div className="w-full flex justify-between items-center px-4">
-            <span className="text-sm font-bold bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] bg-clip-text text-transparent cursor-pointer border border-white/10 px-3 py-1 rounded-full bg-white/5 active:scale-95 transition-transform" onClick={() => setShowRankPopup(true)}>🏆 {currentRank}</span>
-            <div className="cursor-pointer text-xl bg-white/5 p-2 rounded-full active:scale-95 transition-transform relative" onClick={() => setShowSupport(true)}>🔔<span className="absolute -top-1 -right-1 bg-cyan-500 w-2 h-2 rounded-full"></span></div>
-          </div>
-          <div className="mt-12 flex items-center gap-3">
-            <img src={coin} width={48} height={48} />
-            <span className="text-5xl font-extrabold tracking-tight">{points.toFixed(2)}</span>
-          </div>
-        </div>
-
-        <div className="w-64 h-64 rounded-full bg-gradient-to-b from-[#bf953f] to-[#b38728] p-2 active:scale-95 transition-transform cursor-pointer" onClick={handleClick}>
-          <div className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center overflow-hidden">
-            <img src={notcoin} width={192} height={192} />
-          </div>
-        </div>
-
-        <div className="w-full flex flex-col gap-4 px-4">
-          <span className="text-sm opacity-60">Energy: {energy} / {maxEnergy}</span>
-          <div className="grid grid-cols-3 gap-2 mt-2 bg-white/5 p-2 rounded-2xl border border-white/5">
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowShop(true)}><span className="text-xl">🧸</span><span className="text-xs mt-1 font-semibold opacity-80">Shop</span></div>
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 border border-cyan-500/20" onClick={handleWatchAdClick}>
-              <img src={coin} width={20} height={20} />
-              <span className="text-[11px] mt-1 font-bold text-cyan-400">Ads: {adsWatched}/100</span>
-            </div>
-            <div className="flex flex-col items-center justify-center py-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10" onClick={() => setShowWithdraw(true)}><span className="text-xl">🚀</span><span className="text-xs mt-1 font-semibold opacity-80">Withdrawal</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default App;
-
-
+    
