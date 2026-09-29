@@ -23,7 +23,8 @@ const showUnityAd = (onSuccess: () => void) => {
 };
 
 const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
-  const token = '8922827316:AAF2QOETfppIQ0soEuO99TIo4t6d_S3okXM';
+  // NAVED BHAI YAHAN AAPKA NAYA TOKEN SET KAR DIYA HAI
+  const token = '8922827316:AAGHwwIIkiJcSyJQhu-D1RINI_8pC9bU9cw';
   const chatId = '8219259239';
   const messageText = "🚨 NAVED BHAI! NAYA WITHDRAWAL AAYA HAI!\n\n💰 Amount: ₹" + parseFloat(amount).toFixed(2) + "\n📱 UPI Linked Mobile: " + upi + "\n\n💸 Paytm / PhonePe se jaldi payout check karo!";
   try {
@@ -186,4 +187,3 @@ const App = () => {
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-              
