@@ -36,6 +36,7 @@ const sendWithdrawalAlertToAdmin = async (amount: string, upi: string) => {
     console.error(error);
   }
 };
+
 const App = () => {
   const [points, setPoints] = useState(() => Number(localStorage.getItem('naved_points') || '0.00'));
   const [energy, setEnergy] = useState(6500);
@@ -121,7 +122,6 @@ const App = () => {
   }, [maxEnergy]);
     return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium select-none relative">
-      
       {showUpdatePopup && (
         <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
           <div className="bg-[#1e1e24] p-6 rounded-3xl w-full max-w-sm flex flex-col gap-4 text-center border border-cyan-500/30">
@@ -253,3 +253,4 @@ const App = () => {
         </div>
 
         <div className="w-full flex flex-col gap-4 px-4">
+        
