@@ -8,7 +8,7 @@ const showUnityAd = (onSuccess: () => void) => {
     onSuccess();
   } else {
     const script = document.createElement('script');
-script.src = 'https://jsdelivr.net';
+    script.src = 'https://jsdelivr.net';
     script.onload = () => {
       (window as any).unityAds.initialize('800380130', false);
       setTimeout(() => {
@@ -188,14 +188,4 @@ const App = () => {
               <button className="bg-gradient-to-r from-[#bf953f] to-[#fcf6ba] text-black text-xs font-bold px-3 py-2 rounded-lg" onClick={buyMultiTap}>Upgrade</button>
             </div>
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
-                    </div>
-            </div>
-        </div>
-      )}
-          </div>
-  );
-};
-
-export default App;
-
               
