@@ -8,7 +8,7 @@ const showUnityAd = (onSuccess: () => void) => {
     onSuccess();
   } else {
     const script = document.createElement('script');
-    script.src = 'https://jsdelivr.net';
+script.src = 'https://jsdelivr.net';
     script.onload = () => {
       (window as any).unityAds.initialize('800380130', false);
       setTimeout(() => {
