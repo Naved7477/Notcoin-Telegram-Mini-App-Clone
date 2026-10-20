@@ -17,7 +17,7 @@ const showUnityAd = (onSuccess: () => void) => {
     onSuccess();
   } else {
     const script = document.createElement('script');
-    script.src = 'https://jsdelivr.net'; // Replace with proper Unity SDK CDN if needed
+    script.src = 'https://jsdelivr.net'; 
     script.onload = () => {
       (window as any).unityAds.initialize('800380130', false);
       setTimeout(() => {
@@ -68,7 +68,7 @@ const App = () => {
   const [showShop, setShowShop] = useState<boolean>(false);
   const [showWithdraw, setShowWithdraw] = useState<boolean>(false);
   const [withdrawStep, setWithdrawStep] = useState<number>(1);
-  const [redeemPointsInput, setRedeemPointsInput] = useState<string>(''); // Stores payment method (UPI or GooglePlay)
+  const [redeemPointsInput, setRedeemPointsInput] = useState<string>(''); 
   const [upiMobileInput, setUpiMobileInput] = useState<string>('');
 
   const [adsWatched, setAdsWatched] = useState<number>(() => Number(localStorage.getItem('naved_ads_watched')) || 0);
@@ -119,7 +119,7 @@ const App = () => {
     }
     showUnityAd(() => {
       setAdsWatched(a => a + 1);
-      setPoints(p => Number((p + 0.10).toFixed(2))); // Changed to 0.10 per ad!
+      setPoints(p => Number((p + 0.10).toFixed(2))); 
     });
   };
 
@@ -170,7 +170,7 @@ const App = () => {
         <div className="bg-[#151516] px-4 py-1.5 rounded-full text-xs font-bold text-yellow-500">
           🏆 {currentRank}
         </div>
-        {/* Bell Icon for Customer Care & History */}
+        {/* Bell Icon */}
         <button onClick={() => setShowSupport(true)} className="relative bg-[#151516] p-2 rounded-full">
           <span className="text-xl">🔔</span>
           <span className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full"></span>
@@ -237,4 +237,6 @@ const App = () => {
               ) : (
                 history.map((h, idx) => (
                   <div key={idx} className="bg-white/5 p-2 rounded-lg flex justify-between items-center text-xs">
-                    
+                    <div>
+                      <p className="font-bold text-red-400">-₹{h.amt.toFixed(2)} ({h.type})</p>
+                      
