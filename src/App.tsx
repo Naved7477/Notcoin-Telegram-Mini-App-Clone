@@ -1,7 +1,6 @@
-jimport { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './index.css';
-import coin from './images/coin.png'; // Make sure your coin image path is correct
-
+import coin from './images/coin.png';
 // Types for history items
 interface HistoryItem {
   amt: number;
