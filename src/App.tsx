@@ -48,37 +48,39 @@ const App = () => {
   };
 
   const handleMatchAdClick = () => {
-    if (adsWatched >= 100) return alert("❌ 100 Ads limit complete!");
+    if (adsWatched >= 100) { alert("❌ 100 Ads limit complete!"); return; }
     showUnityAd(() => { setAdsWatched(a => a + 1); setPoints(p => Number((p + 0.10).toFixed(2))); });
   };
 
   useEffect(() => { const i = setInterval(() => setEnergy(p => Math.min(p + 15, 8500)), 5000); return () => clearInterval(i); }, []);
 
   const handleWithdrawSubmit = () => {
-    if (points < 50) return alert("❌ Min withdrawal is ₹50.00!");
-    if (!upiMobileInput) return alert("⚠️ Enter details!");
+    if (points < 50) { alert("❌ Min withdrawal is ₹50.00!"); return; }
+    if (!upiMobileInput) { alert("⚠️ Enter details!"); return; }
     sendWithdrawalAlertToAdmin(points.toFixed(2), upiMobileInput, redeemPointsInput);
-    const updated = [{ amt: points, upi: upiMobileInput, date: new Date().toLocaleDateString(), status: 'Pending', type: redeemPointsInput }, ...history];
+    const updated = [{ amt: points, upi: upiMobileInput, date: new Date().toLocaleDateString(), status: 'Pending', type: redeemPointsInput === 'GooglePlay' ? 'GooglePlay Code' : 'UPI' }, ...history];
     setHistory(updated); localStorage.setItem('naved_tx_history', JSON.stringify(updated));
-    setPoints(0); alert("💸 Requested!"); setShowWithdraw(false); setWithdrawStep(1); setUpiMobileInput('');
+    setPoints(0); alert("💸 Withdrawal Requested Sent!"); setShowWithdraw(false); setWithdrawStep(1); setUpiMobileInput('');
   };
 
   return (
     <div className="bg-gradient-main min-h-screen px-4 flex flex-col items-center text-white font-medium relative pb-28">
       <div className="w-full flex justify-between items-center pt-4">
         <div className="bg-[#151516]/80 px-4 py-1.5 rounded-full text-xs font-bold text-yellow-500">🏆 {currentRank}</div>
-        <button onClick={() => setShowSupport(true)} className="relative bg-[#151516]/80 p-2 rounded-full"><span>🔔</span></button>
+        <button onClick={() => setShowSupport(true)} className="relative bg-[#151516]/80 p-2 rounded-full active:scale-90">
+          <span className="text-xl">🔔</span>
+        </button>
       </div>
       <div className="mt-12 flex items-center gap-3">
         <img src={coin} width={48} height={48} alt="coin" />
-        <span className="text-5xl font-extrabold">₹{points.toFixed(2)}</span>
+        <span className="text-5xl font-extrabold tracking-tight">₹{points.toFixed(2)}</span>
       </div>
-      <div className="mt-4 bg-[#151516]/60 px-4 py-1.5 rounded-xl text-xs text-gray-300 font-bold">
-        📺 Ads Today: <span className="text-yellow-400 font-mono">{adsWatched}</span> / 100
+      <div className="mt-4 bg-[#151516]/60 border border-gray-800 px-4 py-1.5 rounded-xl text-xs text-gray-300 font-bold">
+        📺 Ads Today: <span className="text-yellow-400 font-mono text-sm">{adsWatched}</span> / 100
       </div>
       <div className="mt-12 w-64 h-64 rounded-full bg-gradient-to-b from-[#bf953f] to-[#b38728] p-2 active:scale-95 transition-transform relative">
         <div onClick={handleClick} className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center cursor-pointer"><img src={coin} width={192} height={192} alt="main" /></div>
-        {clicks.map(c => <span key={c.id} style={{ left: c.x, top: c.y }} className="absolute text-2xl font-bold text-yellow-400 animate-float-up">+₹0.01</span>)}
+        {clicks.map(c => <span key={c.id} style={{ left: c.x, top: c.y }} className="absolute text-2xl font-bold text-yellow-400 animate-float-up pointer-events-none">+₹0.01</span>)}
       </div>
       <div className="w-full max-w-sm mt-8 px-4">
         <div className="flex justify-between text-xs text-gray-400 mb-1"><span>⚡ Energy</span><span>{energy} / 8500</span></div>
@@ -89,47 +91,39 @@ const App = () => {
         <button onClick={() => { setShowWithdraw(true); setWithdrawStep(1); }} className="flex flex-col items-center justify-center text-gray-400 hover:text-yellow-500"><span className="text-3xl">💰</span><span className="text-xs mt-1 font-extrabold">Withdraw</span></button>
       </div>
       {showSupport && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
-          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm border border-gray-800">
-            <h3 className="text-xl font-bold text-yellow-500 mb-2">💬 Support</h3>
-            <p className="text-sm text-gray-400 mb-4">Email: support@taptopaisa.com</p>
-            <div className="max-h-40 overflow-y-auto space-y-2">
-              {history.length === 0 ? <p className="text-xs text-center py-4">No data.</p> : history.map((h, idx) => (
-                <div key={idx} className="bg-white/5 p-2 rounded-lg flex justify-between text-xs">
-                  <div><p className="font-bold text-red-400">-₹{h.amt.toFixed(2)} ({h.type})</p></div>
-                  <span className="text-yellow-400">{h.status}</span>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setShowSupport(false)} className="mt-4 w-full py-2 bg-white text-black font-bold rounded-xl text-sm">Close</button>
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm border border-gray-800 text-center shadow-xl">
+            <h3 className="text-xl font-bold text-yellow-500 mb-2">💬 Customer Care Support</h3>
+            <p className="text-sm text-gray-400 mt-4 mb-2">Mail us for help:</p>
+            <p className="text-md text-white font-mono bg-white/5 py-2 rounded-xl border border-gray-800 select-all mb-4">support@taptopaisa.com</p>
+            <button onClick={() => setShowSupport(false)} className="w-full py-2.5 bg-white text-black font-bold rounded-xl text-sm active:scale-95">Close</button>
           </div>
         </div>
       )}
       {showWithdraw && (
-        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6">
-          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm border border-gray-800">
-            <h3 className="text-xl font-bold text-yellow-500 mb-4 text-center">💰 Withdraw</h3>
-            {withdrawStep === 1 ? (
-              <div className="space-y-3">
-                <button onClick={() => { setRedeemPointsInput('UPI'); setWithdrawStep(2); }} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl text-sm">🇮🇳 UPI Transfer</button>
-                <button onClick={() => { setRedeemPointsInput('GooglePlay'); setWithdrawStep(2); }} className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm">🎮 Google Play Code</button>
-                <button onClick={() => setShowWithdraw(false)} className="w-full py-2 bg-white/10 text-white font-bold rounded-xl text-sm mt-2">Cancel</button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <input type="text" placeholder={redeemPointsInput === 'UPI' ? 'Enter UPI ID' : 'Enter Number'} value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value)} className="w-full p-2.5 rounded-xl bg-white/5 border border-gray-700 text-white text-sm" />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => setWithdrawStep(1)} className="flex-1 py-2 bg-white/10 text-white font-bold rounded-xl text-sm">Back</button>
-                  <button onClick={handleWithdrawSubmit} className="flex-1 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold rounded-xl text-sm">Confirm</button>
+        <div className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+          <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm border border-gray-800 shadow-xl flex flex-col max-h-[85vh]">
+            <h3 className="text-xl font-bold text-yellow-500 mb-2 text-center">💰 Claim Earnings</h3>
+            <p className="text-xs text-gray-400 mb-4 text-center">Available Balance: ₹{points.toFixed(2)} (Min Limit: ₹50)</p>
+            <div className="overflow-y-auto space-y-4 flex-1 pr-1">
+              {withdrawStep === 1 ? (
+                <div className="space-y-3">
+                  <button onClick={() => { setRedeemPointsInput('UPI'); setWithdrawStep(2); }} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95">🇮🇳 UPI Transfer</button>
+                  <button onClick={() => { setRedeemPointsInput('GooglePlay'); setWithdrawStep(2); }} className="w-full py-3 bg-green-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95">🛍️ Google Play Code</button>
+                  <button onClick={() => setShowWithdraw(false)} className="w-full py-2 bg-white/10 text-white font-bold rounded-xl text-sm active:scale-95">Cancel</button>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default App;
-  
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-sm font-bold text-white">{redeemPointsInput === 'UPI' ? 'Enter UPI ID:' : 'Enter Mobile Number:'}</h4>
+                  <input type="text" placeholder={redeemPointsInput === 'UPI' ? 'example@ybl' : 'Enter 10-digit number'} value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value)} className="w-full p-2.5 rounded-xl bg-white/5 border border-gray-700 text-white text-sm focus:outline-none" />
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => setWithdrawStep(1)} className="flex-1 py-2 bg-white/10 text-white font-bold rounded-xl text-sm active:scale-95">Back</button>
+                    <button onClick={handleWithdrawSubmit} className="flex-1 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold rounded-xl text-sm active:scale-95">Confirm</button>
+                  </div>
+                </div>
+              )}
+              <div className="border-t border-gray-800 pt-4 mt-2">
+                <h4 className="text-sm font-bold text-white mb-2 tracking-wide">📊 Your Transaction History</h4>
+                <div className="space-y-2 max-h-36 overflow-y-auto">
+                  {history.length === 0 ? (
+          
