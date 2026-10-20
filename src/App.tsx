@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import './index.css';
-import coin from './images/coin.png';
-
+import coinImg from './images/coin.png'; // Vite strictly supports direct imports!
 interface HistoryItem { amt: number; upi: string; date: string; status: string; type: string; }
 
 const showUnityAd = (onSuccess: () => void) => {
