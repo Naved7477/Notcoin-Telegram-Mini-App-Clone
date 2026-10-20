@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import './index.css';
 
-// Online clean alternate coin check URL to prevent loading asset bugs
 const coinImg = 'https://icons8.com';
-
 interface HistoryItem { amt: number; upi: string; date: string; status: string; type: string; }
 
 const showUnityAd = (onSuccess: () => void) => {
@@ -18,7 +16,7 @@ const showUnityAd = (onSuccess: () => void) => {
           setTimeout(() => {
             if ((window as any).unityAds?.isReady?.('BP_Rewarded_Android')) {
               (window as any).unityAds.show('BP_Rewarded_Android'); onSuccess();
-            } else { alert("Ad ready ho raha hai, kripya thodi der baad fir click karein!"); }
+            } else { alert("Ad load ho raha hai, thodi der baad try karein!"); }
           }, 2000);
         } catch (e) { console.error(e); }
       };
@@ -48,11 +46,10 @@ const App = () => {
   const [adsWatched, setAdsWatched] = useState<number>(() => Number(localStorage.getItem('naved_ads_watched')) || 0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  // Safe side extraction inside clean wrapper to stop variable loop crashes
   useEffect(() => {
     try {
       const raw = localStorage.getItem('naved_tx_history');
-      if (raw) { setHistory(JSON.parse(raw)); }
+      if (raw) setHistory(JSON.parse(raw));
     } catch (e) { setHistory([]); }
   }, [showWithdraw]);
 
@@ -69,7 +66,7 @@ const App = () => {
   };
 
   const handleMatchAdClick = () => {
-    if (adsWatched >= 100) { alert("❌ 100 Ads limit complete!"); return; }
+    if (adsWatched >= 100) return alert("❌ 100 Ads limit complete!");
     showUnityAd(() => { setAdsWatched(a => a + 1); setPoints(p => Number((p + 0.10).toFixed(2))); });
   };
 
@@ -78,13 +75,13 @@ const App = () => {
   }, []);
 
   const handleWithdrawSubmit = () => {
-    if (points < 50) { alert("❌ Min withdrawal limit ₹50.00 hai!"); return; }
-    if (!upiMobileInput) { alert("⚠️ Enter details!"); return; }
-    const finalType = redeemPointsInput === 'GooglePlay' ? 'GooglePlay Code' : 'UPI';
-    sendWithdrawAlert(points.toFixed(2), upiMobileInput, finalType);
-    const updated = [{ amt: points, upi: upiMobileInput, date: new Date().toLocaleDateString(), status: 'Pending', type: finalType }, ...history];
+    if (points < 50) return alert("❌ Min withdrawal limit ₹50.00 hai!");
+    if (!upiMobileInput) return alert("⚠️ Enter details!");
+    const t = redeemPointsInput === 'GooglePlay' ? 'GooglePlay Code' : 'UPI';
+    sendWithdrawAlert(points.toFixed(2), upiMobileInput, t);
+    const updated = [{ amt: points, upi: upiMobileInput, date: new Date().toLocaleDateString(), status: 'Pending', type: t }, ...history];
     setHistory(updated); localStorage.setItem('naved_tx_history', JSON.stringify(updated));
-    setPoints(0); alert("💸 Requested Successfully!"); setShowWithdraw(false); setWithdrawStep(1); setUpiMobileInput('');
+    setPoints(0); alert("💸 Requested!"); setShowWithdraw(false); setWithdrawStep(1); setUpiMobileInput('');
   };
 
   return (
@@ -101,37 +98,30 @@ const App = () => {
         📺 Ads Today: <span className="text-yellow-400 font-mono text-sm">{adsWatched}</span> / 100
       </div>
       <div className="mt-12 w-64 h-64 rounded-full bg-gradient-to-b from-[#bf953f] to-[#b38728] p-1.5 active:scale-95 transition-transform relative shadow-xl">
-        <div onClick={handleClick} className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center cursor-pointer overflow-hidden">
-          <img src={coinImg} width={180} height={180} alt="main-coin" />
-        </div>
+        <div onClick={handleClick} className="w-full h-full rounded-full bg-[#151516] flex items-center justify-center cursor-pointer overflow-hidden"><img src={coinImg} width={180} height={180} alt="coin" /></div>
         {clicks.map(c => <span key={c.id} style={{ left: c.x, top: c.y }} className="absolute text-xl font-extrabold text-yellow-400 animate-float-up pointer-events-none">+₹0.01</span>)}
       </div>
       <div className="w-full max-w-sm mt-8 px-4">
         <div className="flex justify-between text-xs text-gray-400 mb-1"><span>⚡ Energy</span><span>{energy} / 8500</span></div>
         <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden"><div className="bg-yellow-500 h-full" style={{ width: `${(energy / 8500) * 100}%` }}></div></div>
       </div>
-
       <div className="fixed bottom-0 left-0 right-0 bg-[#151516] border-t border-gray-800 py-4 px-12 flex justify-around items-center z-40 rounded-t-2xl shadow-2xl">
         <button onClick={handleMatchAdClick} className="flex flex-col items-center justify-center text-gray-400 hover:text-yellow-500"><span className="text-3xl block">📺</span><span className="text-xs mt-1 font-extrabold text-white">Watch Ad</span></button>
         <button onClick={() => { setShowWithdraw(true); setWithdrawStep(1); }} className="flex flex-col items-center justify-center text-gray-400 hover:text-yellow-500"><span className="text-3xl block">💰</span><span className="text-xs mt-1 font-extrabold text-white">Withdraw</span></button>
       </div>
-
       {showSupport && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
           <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm border border-gray-800 text-center shadow-xl">
-            <h3 className="text-xl font-bold text-yellow-500 mb-2">💬 Customer Care Support</h3>
-            <p className="text-sm text-gray-400 mt-4 mb-2">Email Us:</p>
-            <p className="text-md text-white font-mono bg-white/5 py-2 rounded-xl border border-gray-800 select-all mb-4">support@taptopaisa.com</p>
+            <h3 className="text-xl font-bold text-yellow-500 mb-2">💬 Support</h3>
+            <p className="text-sm text-gray-400 mt-4 mb-2">Email Us: <span className="text-white font-mono select-all">support@taptopaisa.com</span></p>
             <button onClick={() => setShowSupport(false)} className="w-full py-2.5 bg-white text-black font-bold rounded-xl text-sm">Close</button>
           </div>
         </div>
       )}
-
       {showWithdraw && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
           <div className="bg-[#151516] p-6 rounded-2xl w-full max-w-sm border border-gray-800 shadow-xl flex flex-col max-h-[80vh]">
-            <h3 className="text-xl font-bold text-yellow-500 mb-2 text-center">💰 Claim Earnings</h3>
-            <p className="text-xs text-gray-400 mb-4 text-center">Available Balance: ₹{points.toFixed(2)} (Min Limit: ₹50)</p>
+            <h3 className="text-xl font-bold text-yellow-500 mb-2 text-center">💰 Withdraw</h3>
             <div className="overflow-y-auto space-y-4 flex-1 pr-1">
               {withdrawStep === 1 ? (
                 <div className="space-y-3">
@@ -145,4 +135,11 @@ const App = () => {
                   <input type="text" placeholder={redeemPointsInput === 'UPI' ? 'example@ybl' : 'Enter number'} value={upiMobileInput} onChange={e => setUpiMobileInput(e.target.value)} className="w-full p-2.5 rounded-xl bg-white/5 border border-gray-700 text-white text-sm focus:outline-none" />
                   <div className="flex gap-2 mt-2">
                     <button onClick={() => setWithdrawStep(1)} className="flex-1 py-2 bg-white/10 text-white font-bold rounded-xl text-sm">Back</button>
-                    
+                    <button onClick={handleWithdrawSubmit} className="flex-1 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 text-white font-bold rounded-xl text-sm">Confirm</button>
+                  </div>
+                </div>
+              )}
+              <div className="border-t border-gray-800 pt-4 mt-2">
+                <h4 className="text-sm font-bold text-white mb-2 tracking-wide">📊 History</h4>
+                <div className="space-y-2 max-h-36 overflow-y-auto">
+                  
