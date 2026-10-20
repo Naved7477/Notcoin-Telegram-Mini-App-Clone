@@ -253,5 +253,13 @@ const App = () => {
         </div>
 
         <div className="w-full flex flex-col gap-4 px-4">
+                  </div>
+      </div>
+    </div>
+  );
+};
+
+export default App;
+
           
     
