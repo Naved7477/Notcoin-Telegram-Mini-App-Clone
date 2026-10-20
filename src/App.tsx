@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+jimport { useEffect, useState } from 'react';
 import './index.css';
 import coin from './images/coin.png'; // Make sure your coin image path is correct
 
@@ -231,7 +231,7 @@ const App = () => {
             <p className="text-sm text-gray-400 mb-4">Email Us: <span className="text-white select-all font-mono">support@taptopaisa.com</span></p>
             
             <h4 className="text-md font-bold text-white mb-2">📊 Withdrawal History</h4>
-            <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                      <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
               {history.length === 0 ? (
                 <p className="text-xs text-gray-500 text-center py-4">No withdrawals requested yet.</p>
               ) : (
@@ -239,4 +239,14 @@ const App = () => {
                   <div key={idx} className="bg-white/5 p-2 rounded-lg flex justify-between items-center text-xs">
                     <div>
                       <p className="font-bold text-red-400">-₹{h.amt.toFixed(2)} ({h.type})</p>
-                      
+                      <p className="text-[10px] text-gray-500">{h.date}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[10px] ${h.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                      {h.status}
+                    </span>
+                          </div>
+                ))
+              )}
+            </div>
+            
+            
