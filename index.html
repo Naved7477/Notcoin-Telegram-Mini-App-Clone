@@ -1,21 +1,15 @@
-const showUnityAd = (cb: () => void) => {
-  // @ts-ignore
-  if (window.Adsgram) {
-    // @ts-ignore
-    const AdController = window.Adsgram.init({ blockId: "56096" });
-    AdController.show()
-      .then(() => {
-        // Agar real ad load ho gaya toh counter badhega
-        cb();
-      })
-      .catch((err: any) => {
-        console.log("Ad show error, launching test bypass:", err);
-        // Adsgram ka ad abhi block hai, testing ke liye automatic points badha rahe hain
-        cb(); 
-      });
-  } else {
-    // Agar script block ya missing hai, toh bhi points directly badhao taaki game chalti rahe
-    console.log("Fallback activated.");
-    cb();
-  }
-};
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tap To Paisa</title>
+    <!-- Adsgram Official Library -->
+    <script src="https://adsgram.ai"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
