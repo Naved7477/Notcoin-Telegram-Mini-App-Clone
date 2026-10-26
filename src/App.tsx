@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import './index.css';
-
 const coinImg = 'https://icons8.com';
 interface HistoryItem { amt: number; upi: string; date: string; status: string; type: string; }
 
@@ -8,12 +7,24 @@ const showUnityAd = (cb: () => void) => {
   // @ts-ignore
   if (window.Adsgram) {
     // @ts-ignore
-    window.Adsgram.init({ blockId: "56096" })
-      .show()
+    const AdController = window.Adsgram.init({ blockId: "56096" });
+    AdController.show()
       .then(() => {
-        // Ad pura dekhne par callback trigger hoga aur points/ads badhenge
+        // Agar real ad load ho gaya toh counter badhega
         cb();
       })
+      .catch((err: any) => {
+        console.log("Ad show error, launching test bypass:", err);
+        // Adsgram ka ad abhi block hai, testing ke liye automatic points badha rahe hain
+        cb(); 
+      });
+  } else {
+    // Agar script block ya missing hai, toh bhi points directly badhao taaki game chalti rahe
+    console.log("Fallback activated.");
+    cb();
+  }
+};
+
       .catch((err: any) => {
         console.log("Ad skipped or error", err);
         alert("don't skip ad now!");
