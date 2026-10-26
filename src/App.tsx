@@ -5,17 +5,24 @@ const coinImg = 'https://icons8.com';
 interface HistoryItem { amt: number; upi: string; date: string; status: string; type: string; }
 
 const showUnityAd = (cb: () => void) => {
-  if ((window as any).unityAds?.isReady?.('BP_Rewarded_Android')) {
-    (window as any).unityAds.show('BP_Rewarded_Android'); cb();
+  // @ts-ignore
+  if (window.Adsgram) {
+    // @ts-ignore
+    window.Adsgram.init({ blockId: "56096" })
+      .show()
+      .then(() => {
+        // Ad pura dekhne par callback trigger hoga aur points/ads badhenge
+        cb();
+      })
+      .catch((err: any) => {
+        console.log("Ad skipped or error", err);
+        alert("don't skip ad now!");
+      });
   } else {
-    const s = document.createElement('script'); s.src = 'https://jsdelivr.net';
-    s.onload = () => {
-      (window as any).unityAds?.initialize('800380130', false);
-      setTimeout(() => (window as any).unityAds?.isReady?.('BP_Rewarded_Android') ? (window as any).unityAds.show('BP_Rewarded_Android') && cb() : alert("Ad ready ho raha hai!"), 2000);
-    };
-    document.body.appendChild(s);
+    alert("Ads platform load nahi ho paya, reload karein.");
   }
 };
+
 
 const sendWithdrawAlert = async (amount: string, upi: string, type: string) => {
   try {
