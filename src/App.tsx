@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './index.css';
-https://i.ibb.co/vX1XwZ8/crypto-coin.png
+const CoinImg=https://i.ibb.co/vX1XwZ8/crypto-coin.png
 interface HistoryItem { amt: number; upi: string; date: string; status: string; type: string; }
 
 const showUnityAd = (cb: () => void) => {
