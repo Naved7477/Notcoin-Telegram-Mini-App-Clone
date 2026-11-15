@@ -246,25 +246,24 @@ function App() {
               >
                 🏦 UPI Transfer
               </button>
-              <button
+                            <button
                 onClick={() => setWithdrawMethod('REDEEM')}
-                className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
-                  withdrawMethod === 'REDEEM' 
-                    ? 'bg-yellow-500 text-black border-yellow-500' 
-                                      ? 'bg-yellow-500 text-black border-yellow-500' 
-                    : 'bg-zinc-800 text-gray-300 border-zinc-700'
+                className={
+                  withdrawMethod === 'REDEEM'
+                    ? 'py-2 px-3 rounded-xl text-xs font-semibold border bg-yellow-500 text-black border-yellow-500'
+                    : 'py-2 px-3 rounded-xl text-xs font-semibold border bg-zinc-800 text-gray-300 border-zinc-700'
                 }
               >
-                🎮 Google Play Code
+                🎮 Google Play Store
               </button>
             </div>
 
             {/* Input Box */}
             <div>
               <label className="text-xs text-gray-400 block mb-1">
-                {withdrawMethod === 'UPI' 
-                  ? 'Apna UPI ID dalein (jaise name@okaxis):' 
-                  : 'Apna Gmail ya @Telegram username dalein (code bhejne ke liye):'}
+                {withdrawMethod === 'UPI'
+                  ? 'Apna UPI ID dalein (jaise name@okaxis):'
+                  : 'Apna Gmail ya @Telegram username dalein (Google Play Store code ke liye):'}
               </label>
               <input
                 type="text"
@@ -299,5 +298,3 @@ function App() {
 }
 
 export default App;
-
-    
