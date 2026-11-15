@@ -250,5 +250,53 @@ function App() {
                 onClick={() => setWithdrawMethod('REDEEM')}
                 className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
                   withdrawMethod === 'REDEEM' 
-                    ? 'bg-yellow-500 text-black border-yellow-500' 
+                    ? 'bg-yellow-500 text-black border-yellow-500'                     ? 'bg-yellow-500 text-black border-yellow-500' 
+                    : 'bg-zinc-800 text-gray-300 border-zinc-700'
+                }`}
+              >
+                🎮 Google Play Code
+              </button>
+            </div>
+
+            {/* Input Box */}
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">
+                {withdrawMethod === 'UPI' 
+                  ? 'Apna UPI ID dalein (jaise name@okaxis):' 
+                  : 'Apna Gmail ya @Telegram username dalein (code bhejne ke liye):'}
+              </label>
+              <input
+                type="text"
+                value={withdrawInput}
+                onChange={(e) => setWithdrawInput(e.target.value)}
+                placeholder={withdrawMethod === 'UPI' ? 'example@upi' : 'name@gmail.com ya @username'}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500"
+              />
+            </div>
+
+            {/* Submit & Cancel Buttons */}
+            <div className="flex space-x-2 pt-2">
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 text-gray-300 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleWithdrawSubmit}
+                className="flex-1 py-2 rounded-xl bg-yellow-500 text-black text-sm font-bold"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+export default App;
+
                   
