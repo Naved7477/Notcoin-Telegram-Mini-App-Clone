@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import './App.css';
 
-// TypeScript ke liye window object declare karna
 declare global {
   interface Window {
-    Adsgram: any;
+    AdexiumWidget: any;
     Telegram: any;
   }
 }
@@ -24,31 +23,37 @@ function App() {
     }
   };
 
-  // 2. WATCH AD LOGIC (AdsGram Real Ad + ₹0.05 Reward)
+  // 2. WATCH AD LOGIC (Adexium Ad + ₹0.05 Reward)
   const handleWatchAdClick = () => {
     if (adsWatched >= 100) {
       alert("Aaj ki 100 ads ki limit poori ho gayi hai!");
       return;
     }
 
-    if (window.Adsgram) {
-      // YAHAN APNA ADSGRAM BLOCK ID DALEIN (jaise "1234")
-      const AdController = window.Adsgram.init({ blockId: "APNA_BLOCK_ID" });
-
-      AdController.show()
-        .then((result: any) => {
-          if (result.done) {
-            setAdsWatched((prev) => prev + 1);
-            setBalance((prev) => parseFloat((prev + 0.05).toFixed(2)));
-            alert("Badhai ho! ₹0.05 add ho gaye.");
-          }
-        })
-        .catch((error: any) => {
-          console.error("Ad error:", error);
-          alert("Ad load nahi hui. Check karein ki AdsGram platform Active ho.");
+    if (window.AdexiumWidget) {
+      try {
+        const adexiumWidget = new window.AdexiumWidget({
+          wid: 'dc83b77d-01d0-412f-9055-0945fb57b2d8',
+          adFormat: 'interstitial'
         });
+
+        adexiumWidget.requestAd('interstitial');
+
+        adexiumWidget.on('adPlaybackCompleted', () => {
+          setAdsWatched((prev) => prev + 1);
+          setBalance((prev) => parseFloat((prev + 0.05).toFixed(2)));
+          alert("Badhai ho! ₹0.05 add ho gaye.");
+        });
+
+        adexiumWidget.on('noAdFound', () => {
+          alert("Abhi ad available nahi hai, thodi der baad try karein.");
+        });
+      } catch (error) {
+        console.error("Adexium error:", error);
+        alert("Ad load hone mein error aaya.");
+      }
     } else {
-      alert("AdsGram SDK load nahi hua hai!");
+      alert("Adexium SDK load nahi hua hai!");
     }
   };
 
