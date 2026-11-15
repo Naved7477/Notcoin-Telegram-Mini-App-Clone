@@ -136,7 +136,7 @@ function App() {
     const bonusAmount = isRankUpgraded ? parseFloat((newCount * 0.25).toFixed(2)) : 0.00;
     const newBadge = getLeague(newCount);
 
-    const messageText = `🔔 *New Withdrawal Request!*\n\n👤 *User:* ${userName} (ID: \`${userId}\`)\n💰 *Amount:* ₹${balance.toFixed(2)}\n💳 *Method:* ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Store'}\n📝 *Details:* \`${withdrawInput}\`\n🏆 *New Rank:* ${newBadge}`;
+    const messageText = `🎧 *New Withdrawal Request!*\n\n👤 *User:* ${userName} (ID: \`${userId}\`)\n💰 *Amount:* ₹${balance.toFixed(2)}\n💳 *Method:* ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Store'}\n📝 *Details:* \`${withdrawInput}\`\n🏆 *New Rank:* ${newBadge}`;
 
     const apiUrl = "https://" + `api.telegram.org/bot${botToken}/sendMessage`;
 
@@ -192,7 +192,7 @@ function App() {
           onClick={handleSupportClick}
           className="p-2 bg-zinc-900/90 rounded-full cursor-pointer active:scale-90 transition-transform"
         >
-          <span className="text-xl">🔔</span>
+          <span className="text-xl">🎧</span>
         </div>
       </div>
 
