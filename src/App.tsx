@@ -258,4 +258,79 @@ function App() {
       {showWithdrawModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center px-4 z-50">
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-sm space-y-4">
+            <h2 className="text-lg font-bold text-center text-yellow-500">Withdraw ₹{balance.toFixed(2)}</h2>
+            
+            {/* Method Selection Buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setWithdrawMethod('UPI')}
+                className={
+                  withdrawMethod === 'UPI'
+                    ? 'py-2 px-3 rounded-xl text-xs font-semibold border bg-yellow-500 text-black border-yellow-500'
+                    : 'py-2 px-3 rounded-xl text-xs font-semibold border bg-zinc-800 text-gray-300 border-zinc-700'
+                }
+              >
+                🏦 UPI Transfer
+              </button>
+              <button
+                onClick={() => setWithdrawMethod('REDEEM')}
+                className={
+                  withdrawMethod === 'REDEEM'
+                    ? 'py-2 px-3 rounded-xl text-xs font-semibold border bg-yellow-500 text-black border-yellow-500'
+                    : 'py-2 px-3 rounded-xl text-xs font-semibold border bg-zinc-800 text-gray-300 border-zinc-700'
+                }
+              >
+                <span className="flex items-center justify-center gap-1.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M3.6 2.4c-.3.3-.5.8-.5 1.4v16.4c0 .6.2 1.1.5 1.4l.1.1 9.2-9.2v-.2L3.7 2.3l-.1.1z"/>
+                    <path fill="#34A853" d="M16 15.5l-3.1-3.1v-.2L16 9.1l.1.1 3.6 2.1c1 .6 1 1.5 0 2.1l-3.6 2.1-.1 0z"/>
+                    <path fill="#FBBC05" d="M16.1 15.4L12.9 12.2 3.6 21.5c.3.4.9.4 1.6 0l10.9-6.1z"/>
+                    <path fill="#EA4335" d="M16.1 8.6L5.2 2.5c-.7-.4-1.3-.4-1.6 0l9.3 9.3 3.2-3.2z"/>
+                  </svg>
+                  <span>Google Play Store</span>
+                </span>
+              </button>
+            </div>
+
+            {/* Input Box */}
+            <div>
+              <label className="text-xs text-gray-400 block mb-1">
+                {withdrawMethod === 'UPI'
+                  ? 'Apna UPI ID dalein (jaise name@okaxis):'
+                  : 'Apna Gmail ya @Telegram username dalein (Google Play Store code ke liye):'}
+              </label>
+              <input
+                type="text"
+                value={withdrawInput}
+                onChange={(e) => setWithdrawInput(e.target.value)}
+                placeholder={withdrawMethod === 'UPI' ? 'example@upi' : 'name@gmail.com ya @username'}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500"
+              />
+            </div>
+
+            {/* Submit & Cancel Buttons */}
+            <div className="flex space-x-2 pt-2">
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 text-gray-300 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleWithdrawSubmit}
+                className="flex-1 py-2 rounded-xl bg-yellow-500 text-black text-sm font-bold"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+export default App;
+          
             
