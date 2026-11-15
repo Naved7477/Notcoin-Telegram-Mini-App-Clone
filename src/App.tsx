@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 declare global {
@@ -9,24 +9,52 @@ declare global {
 }
 
 function App() {
-  const [balance, setBalance] = useState<number>(0.00);
-  const [adsWatched, setAdsWatched] = useState<number>(0);
-  const [energy, setEnergy] = useState<number>(8500);
+  const todayDate = new Date().toDateString(); // Aaj ki date nikalne ke liye
 
-  // 1. TAP COIN LOGIC (Per click ₹0.01)
+  // 1. Balance load karna (taaki refresh par 0 na ho)
+  const [balance, setBalance] = useState<number>(() => {
+    const saved = localStorage.getItem('ttp_balance');
+    return saved ? parseFloat(saved) : 0.00;
+  });
+
+  // 2. Daily Ads count load karna (agle din reset hoga)
+  const [adsWatched, setAdsWatched] = useState<number>(() => {
+    const savedDate = localStorage.getItem('ttp_date');
+    if (savedDate !== todayDate) return 0;
+    const savedAds = localStorage.getItem('ttp_ads');
+    return savedAds ? parseInt(savedAds) : 0;
+  });
+
+  // 3. Daily Energy load karna (agle din 8500 refill hogi)
+  const [energy, setEnergy] = useState<number>(() => {
+    const savedDate = localStorage.getItem('ttp_date');
+    if (savedDate !== todayDate) return 8500; // Naya din = Full 8500 refill
+    const savedEnergy = localStorage.getItem('ttp_energy');
+    return savedEnergy !== null ? parseInt(savedEnergy) : 8500;
+  });
+
+  // Jab bhi balance, energy, ya ads badlein, use save karein
+  useEffect(() => {
+    localStorage.setItem('ttp_date', todayDate);
+    localStorage.setItem('ttp_balance', balance.toFixed(2));
+    localStorage.setItem('ttp_energy', energy.toString());
+    localStorage.setItem('ttp_ads', adsWatched.toString());
+  }, [balance, energy, adsWatched, todayDate]);
+
+  // TAP COIN LOGIC (Per click ₹0.01)
   const handleTapCoin = () => {
     if (energy > 0) {
       setBalance((prev) => parseFloat((prev + 0.01).toFixed(2)));
       setEnergy((prev) => prev - 1);
     } else {
-      alert("Energy khatam ho gayi hai!");
+      alert("Aaj ki energy khatam ho gayi hai! Ab kal subah 8,500 energy refill hogi.");
     }
   };
 
-  // 2. WATCH AD LOGIC (Adexium Ad + ₹0.05 Reward)
+  // WATCH AD LOGIC (Adexium Ad + ₹0.05 Reward)
   const handleWatchAdClick = () => {
     if (adsWatched >= 100) {
-      alert("Aaj ki 100 ads ki limit poori ho gayi hai!");
+      alert("Aaj ki 100 ads ki limit poori ho gayi hai! Kal dobara dekhein.");
       return;
     }
 
@@ -57,7 +85,7 @@ function App() {
     }
   };
 
-  // 3. WITHDRAW LOGIC (Minimum ₹50)
+  // WITHDRAW LOGIC (Minimum ₹50)
   const handleWithdraw = () => {
     if (balance < 50) {
       alert(`Minimum withdrawal ₹50 hai! Abhi aapka balance ₹${balance.toFixed(2)} hai.`);
@@ -70,7 +98,7 @@ function App() {
     }
   };
 
-  // 4. CUSTOMER SERVICE BELL ICON LOGIC
+  // CUSTOMER SERVICE BELL ICON LOGIC
   const handleSupportClick = () => {
     const supportUrl = "https://t.me"; // Yahan apna Telegram username dalein
     if (window.Telegram?.WebApp) {
