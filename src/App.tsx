@@ -146,7 +146,7 @@ function App() {
 
   // CUSTOMER SERVICE BELL ICON
   const handleSupportClick = () => {
-    const supportUrl = "https://t.me";
+    const supportUrl = "https://t.me/naved_games"
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl);
     } else {
