@@ -9,15 +9,15 @@ declare global {
 }
 
 function App() {
-  const todayDate = new Date().toDateString(); // Aaj ki date nikalne ke liye
+  const todayDate = new Date().toDateString();
 
-  // 1. Balance load karna (taaki refresh par 0 na ho)
+  // 1. Balance State (LocalStorage mein save rahega)
   const [balance, setBalance] = useState<number>(() => {
     const saved = localStorage.getItem('ttp_balance');
     return saved ? parseFloat(saved) : 0.00;
   });
 
-  // 2. Daily Ads count load karna (agle din reset hoga)
+  // 2. Daily Ads Count (Agle din 0 se reset hoga)
   const [adsWatched, setAdsWatched] = useState<number>(() => {
     const savedDate = localStorage.getItem('ttp_date');
     if (savedDate !== todayDate) return 0;
@@ -25,21 +25,43 @@ function App() {
     return savedAds ? parseInt(savedAds) : 0;
   });
 
-  // 3. Daily Energy load karna (agle din 8500 refill hogi)
+  // 3. Daily Energy State (Khatam hone par agle din 8500 refill hogi)
   const [energy, setEnergy] = useState<number>(() => {
     const savedDate = localStorage.getItem('ttp_date');
-    if (savedDate !== todayDate) return 8500; // Naya din = Full 8500 refill
+    if (savedDate !== todayDate) return 8500;
     const savedEnergy = localStorage.getItem('ttp_energy');
     return savedEnergy !== null ? parseInt(savedEnergy) : 8500;
   });
 
-  // Jab bhi balance, energy, ya ads badlein, use save karein
+  // 4. Total Withdrawals Count (Badge upgrade ke liye)
+  const [withdrawCount, setWithdrawCount] = useState<number>(() => {
+    const savedCount = localStorage.getItem('ttp_withdraw_count');
+    return savedCount ? parseInt(savedCount) : 0;
+  });
+
+  // Withdrawal Popup State
+  const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
+  const [withdrawMethod, setWithdrawMethod] = useState<'UPI' | 'REDEEM'>('UPI');
+  const [withdrawInput, setWithdrawInput] = useState<string>('');
+
+  // Data Save Effect
   useEffect(() => {
     localStorage.setItem('ttp_date', todayDate);
     localStorage.setItem('ttp_balance', balance.toFixed(2));
     localStorage.setItem('ttp_energy', energy.toString());
     localStorage.setItem('ttp_ads', adsWatched.toString());
-  }, [balance, energy, adsWatched, todayDate]);
+    localStorage.setItem('ttp_withdraw_count', withdrawCount.toString());
+  }, [balance, energy, adsWatched, withdrawCount, todayDate]);
+
+  // Badge Logic (Bronze se Heroic tak)
+  const getLeague = (count: number) => {
+    if (count >= 5) return '🔥 HEROIC';
+    if (count === 4) return '💠 DIAMOND';
+    if (count === 3) return '💎 PLATINUM';
+    if (count === 2) return '🥇 GOLD';
+    if (count === 1) return '🥈 SILVER';
+    return '🏆 BRONZE';
+  };
 
   // TAP COIN LOGIC (Per click ₹0.01)
   const handleTapCoin = () => {
@@ -85,23 +107,46 @@ function App() {
     }
   };
 
-  // WITHDRAW LOGIC (Minimum ₹50)
-  const handleWithdraw = () => {
+  // OPEN WITHDRAW MODAL (Minimum ₹50)
+  const handleWithdrawOpen = () => {
     if (balance < 50) {
       alert(`Minimum withdrawal ₹50 hai! Abhi aapka balance ₹${balance.toFixed(2)} hai.`);
       return;
     }
-    const upi = prompt("Apna UPI ID dalein (jaise name@upi):");
-    if (upi && upi.trim() !== "") {
-      alert(`₹${balance.toFixed(2)} ki withdrawal request (${upi}) submit ho gayi hai!`);
-      setBalance(0);
+    setShowWithdrawModal(true);
+  };
+
+  // SUBMIT WITHDRAWAL + PROGRESSIVE BONUS (+₹0.25 each badge up to Heroic)
+  const handleWithdrawSubmit = () => {
+    if (!withdrawInput.trim()) {
+      alert(withdrawMethod === 'UPI' ? "Apna UPI ID dalein!" : "Apna Gmail ya Telegram Username dalein!");
+      return;
+    }
+
+    const newCount = withdrawCount + 1;
+    const isRankUpgraded = withdrawCount < 5;
+    const bonusAmount = isRankUpgraded ? parseFloat((newCount * 0.25).toFixed(2)) : 0.00;
+    const newBadge = getLeague(newCount);
+
+    setWithdrawCount(newCount);
+    setBalance(bonusAmount);
+    setWithdrawInput('');
+    setShowWithdrawModal(false);
+
+    if (isRankUpgraded) {
+      alert(
+        `Withdrawal Request Submit Ho Gayi!\n\nMethod: ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Redeem Code'}\nDetails: ${withdrawInput}\n\n🎉 RANK UP! Aap ab ${newBadge} par pahunch gaye hain aur aapko ₹${bonusAmount.toFixed(2)} Rank-Up Bonus mila hai!`
+      );
+    } else {
+      alert(
+        `Withdrawal Request Submit Ho Gayi!\n\nMethod: ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Redeem Code'}\nDetails: ${withdrawInput}\n\nAap pehle se 🔥 HEROIC (Max Rank) par hain!`
+      );
     }
   };
 
-  // CUSTOMER SERVICE BELL ICON LOGIC
+  // CUSTOMER SERVICE BELL ICON
   const handleSupportClick = () => {
-    const supportUrl = "https://t.me/naved_games"
-    
+    const supportUrl = "https://t.me";
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl);
     } else {
@@ -112,10 +157,10 @@ function App() {
   return (
     <div className="bg-[#0b0b0e] min-h-screen px-4 flex flex-col items-center text-white relative pb-24 select-none">
       
-      {/* Top Bar: Bronze League & Notification Bell */}
+      {/* Top Bar: League Badge & Notification Bell */}
       <div className="w-full flex justify-between items-center mt-6 px-2">
         <div className="bg-zinc-900/80 border border-amber-600/30 px-3 py-1 rounded-full flex items-center space-x-1">
-          <span className="text-sm">🏆 BRONZE</span>
+          <span className="text-sm font-semibold">{getLeague(withdrawCount)}</span>
         </div>
         <div 
           onClick={handleSupportClick}
@@ -147,9 +192,9 @@ function App() {
         </div>
       </div>
 
-      {/* Bottom Interface: Energy Bar and Bottom Navigation Buttons */}
+      {/* Bottom Interface */}
       <div className="w-full max-w-md space-y-5 px-2">
-        {/* Energy Status Bar Component */}
+        {/* Energy Status Bar */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-gray-400">
             <span className="flex items-center text-yellow-500">⚡ Energy</span>
@@ -163,7 +208,7 @@ function App() {
           </div>
         </div>
 
-        {/* Action Button Navigation Bar UI */}
+        {/* Action Button Navigation Bar */}
         <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-3 flex justify-around items-center shadow-lg">
           <button
             onClick={handleWatchAdClick}
@@ -174,7 +219,7 @@ function App() {
           </button>
 
           <button
-            onClick={handleWithdraw}
+            onClick={handleWithdrawOpen}
             className="flex flex-col items-center space-y-1 text-gray-300 hover:text-white active:scale-95 transition-transform"
           >
             <span className="text-2xl">💰</span>
@@ -183,8 +228,27 @@ function App() {
         </div>
       </div>
 
-    </div>
-  );
-}
-
-export default App;
+      {/* Withdrawal Modal (UPI & Google Play Redeem Code) */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center px-4 z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-sm space-y-4">
+            <h2 className="text-lg font-bold text-center text-yellow-500">Withdraw ₹{balance.toFixed(2)}</h2>
+            
+            {/* Method Selection Buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setWithdrawMethod('UPI')}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
+                  withdrawMethod === 'UPI' 
+                    ? 'bg-yellow-500 text-black border-yellow-500' 
+                    : 'bg-zinc-800 text-gray-300 border-zinc-700'
+                }`}
+              >
+                🏦 UPI Transfer
+              </button>
+              <button
+                onClick={() => setWithdrawMethod('REDEEM')}
+                className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
+                  withdrawMethod === 'REDEEM' 
+                    ? 'bg-yellow-500 text-black border-yellow-500' 
+                  
