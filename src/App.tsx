@@ -100,7 +100,8 @@ function App() {
 
   // CUSTOMER SERVICE BELL ICON LOGIC
   const handleSupportClick = () => {
-    const supportUrl = "https://t.me"; // Yahan apna Telegram username dalein
+    const supportUrl = "https://t.me/naved_games"
+    
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl);
     } else {
