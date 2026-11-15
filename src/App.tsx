@@ -11,13 +11,13 @@ declare global {
 function App() {
   const todayDate = new Date().toDateString();
 
-  // 1. Balance State (LocalStorage mein save rahega)
+  // 1. Balance State
   const [balance, setBalance] = useState<number>(() => {
     const saved = localStorage.getItem('ttp_balance');
     return saved ? parseFloat(saved) : 0.00;
   });
 
-  // 2. Daily Ads Count (Agle din 0 se reset hoga)
+  // 2. Daily Ads Count
   const [adsWatched, setAdsWatched] = useState<number>(() => {
     const savedDate = localStorage.getItem('ttp_date');
     if (savedDate !== todayDate) return 0;
@@ -25,7 +25,7 @@ function App() {
     return savedAds ? parseInt(savedAds) : 0;
   });
 
-  // 3. Daily Energy State (Khatam hone par agle din 8500 refill hogi)
+  // 3. Daily Energy State (Agle din 8500 refill hogi)
   const [energy, setEnergy] = useState<number>(() => {
     const savedDate = localStorage.getItem('ttp_date');
     if (savedDate !== todayDate) return 8500;
@@ -33,7 +33,7 @@ function App() {
     return savedEnergy !== null ? parseInt(savedEnergy) : 8500;
   });
 
-  // 4. Total Withdrawals Count (Badge upgrade ke liye)
+  // 4. Total Withdrawals Count
   const [withdrawCount, setWithdrawCount] = useState<number>(() => {
     const savedCount = localStorage.getItem('ttp_withdraw_count');
     return savedCount ? parseInt(savedCount) : 0;
@@ -44,7 +44,7 @@ function App() {
   const [withdrawMethod, setWithdrawMethod] = useState<'UPI' | 'REDEEM'>('UPI');
   const [withdrawInput, setWithdrawInput] = useState<string>('');
 
-  // Data Save Effect
+  // LocalStorage Sync
   useEffect(() => {
     localStorage.setItem('ttp_date', todayDate);
     localStorage.setItem('ttp_balance', balance.toFixed(2));
@@ -53,7 +53,7 @@ function App() {
     localStorage.setItem('ttp_withdraw_count', withdrawCount.toString());
   }, [balance, energy, adsWatched, withdrawCount, todayDate]);
 
-  // Badge Logic (Bronze se Heroic tak)
+  // Rank Badge Logic (Bronze se Heroic tak)
   const getLeague = (count: number) => {
     if (count >= 5) return '🔥 HEROIC';
     if (count === 4) return '💠 DIAMOND';
@@ -116,17 +116,43 @@ function App() {
     setShowWithdrawModal(true);
   };
 
-  // SUBMIT WITHDRAWAL + PROGRESSIVE BONUS (+₹0.25 each badge up to Heroic)
-  const handleWithdrawSubmit = () => {
+  // SUBMIT WITHDRAWAL + TELEGRAM MESSAGE ALERT + PROGRESSIVE BONUS
+  const handleWithdrawSubmit = async () => {
     if (!withdrawInput.trim()) {
       alert(withdrawMethod === 'UPI' ? "Apna UPI ID dalein!" : "Apna Gmail ya Telegram Username dalein!");
       return;
     }
 
+    // YAHAN APNA NAYA BOT TOKEN DALEIN
+    const botToken = "NAYA_BOT_TOKEN_YAHAN_DALEIN";
+    const adminChatId = "8219259239";
+
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const userName = tgUser?.username ? `@${tgUser.username}` : (tgUser?.first_name || "Unknown User");
+    const userId = tgUser?.id || "N/A";
+
     const newCount = withdrawCount + 1;
     const isRankUpgraded = withdrawCount < 5;
     const bonusAmount = isRankUpgraded ? parseFloat((newCount * 0.25).toFixed(2)) : 0.00;
     const newBadge = getLeague(newCount);
+
+    const messageText = `🔔 *New Withdrawal Request!*\n\n👤 *User:* ${userName} (ID: \`${userId}\`)\n💰 *Amount:* ₹${balance.toFixed(2)}\n💳 *Method:* ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Store'}\n📝 *Details:* \`${withdrawInput}\`\n🏆 *New Rank:* ${newBadge}`;
+
+    const apiUrl = "https://" + `api.telegram.org/bot${botToken}/sendMessage`;
+
+    try {
+      await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: adminChatId,
+          text: messageText,
+          parse_mode: "Markdown"
+        })
+      });
+    } catch (err) {
+      console.error("Telegram alert failed:", err);
+    }
 
     setWithdrawCount(newCount);
     setBalance(bonusAmount);
@@ -135,18 +161,18 @@ function App() {
 
     if (isRankUpgraded) {
       alert(
-        `Withdrawal Request Submit Ho Gayi!\n\nMethod: ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Redeem Code'}\nDetails: ${withdrawInput}\n\n🎉 RANK UP! Aap ab ${newBadge} par pahunch gaye hain aur aapko ₹${bonusAmount.toFixed(2)} Rank-Up Bonus mila hai!`
+        `Withdrawal Request Submit Ho Gayi!\n\nMethod: ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Store'}\nDetails: ${withdrawInput}\n\n🎉 RANK UP! Aap ab ${newBadge} par pahunch gaye hain aur aapko ₹${bonusAmount.toFixed(2)} Rank-Up Bonus mila hai!`
       );
     } else {
       alert(
-        `Withdrawal Request Submit Ho Gayi!\n\nMethod: ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Redeem Code'}\nDetails: ${withdrawInput}\n\nAap pehle se 🔥 HEROIC (Max Rank) par hain!`
+        `Withdrawal Request Submit Ho Gayi!\n\nMethod: ${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Store'}\nDetails: ${withdrawInput}\n\nAap pehle se 🔥 HEROIC (Max Rank) par hain!`
       );
     }
   };
 
   // CUSTOMER SERVICE BELL ICON
   const handleSupportClick = () => {
-    const supportUrl = "https://t.me/naved_games"
+    const supportUrl = "https://" + "t.me/naved_games";
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl);
     } else {
@@ -228,82 +254,8 @@ function App() {
         </div>
       </div>
 
-      {/* Withdrawal Modal (UPI & Google Play Redeem Code) */}
+      {/* Withdrawal Modal (UPI & Google Play Store) */}
       {showWithdrawModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center px-4 z-50">
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-sm space-y-4">
-            <h2 className="text-lg font-bold text-center text-yellow-500">Withdraw ₹{balance.toFixed(2)}</h2>
             
-            {/* Method Selection Buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setWithdrawMethod('UPI')}
-                className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
-                  withdrawMethod === 'UPI' 
-                    ? 'bg-yellow-500 text-black border-yellow-500' 
-                    : 'bg-zinc-800 text-gray-300 border-zinc-700'
-                }`}
-              >
-                🏦 UPI Transfer
-              </button>
-                            <button
-                onClick={() => setWithdrawMethod('REDEEM')}
-                className={
-                  withdrawMethod === 'REDEEM'
-                    ? 'py-2 px-3 rounded-xl text-xs font-semibold border bg-yellow-500 text-black border-yellow-500'
-                    : 'py-2 px-3 rounded-xl text-xs font-semibold border bg-zinc-800 text-gray-300 border-zinc-700'
-                }
-              >
-                <span className="flex items-center justify-center gap-1.5">
-  <svg className="w-4 h-4" viewBox="0 0 24 24">
-    <path fill="#4285F4" d="M3.6 2.4c-.3.3-.5.8-.5 1.4v16.4c0 .6.2 1.1.5 1.4l.1.1 9.2-9.2v-.2L3.7 2.3l-.1.1z"/>
-    <path fill="#34A853" d="M16 15.5l-3.1-3.1v-.2L16 9.1l.1.1 3.6 2.1c1 .6 1 1.5 0 2.1l-3.6 2.1-.1 0z"/>
-    <path fill="#FBBC05" d="M16.1 15.4L12.9 12.2 3.6 21.5c.3.4.9.4 1.6 0l10.9-6.1z"/>
-    <path fill="#EA4335" d="M16.1 8.6L5.2 2.5c-.7-.4-1.3-.4-1.6 0l9.3 9.3 3.2-3.2z"/>
-  </svg>
-  <span>Google Play Store</span>
-</span>
-                        
-              </button>
-            </div>
-
-            {/* Input Box */}
-            <div>
-              <label className="text-xs text-gray-400 block mb-1">
-                {withdrawMethod === 'UPI'
-                  ? 'Apna UPI ID dalein (jaise name@okaxis):'
-                  : 'Apna Gmail ya @Telegram username dalein (Google Play Store code ke liye):'}
-              </label>
-              <input
-                type="text"
-                value={withdrawInput}
-                onChange={(e) => setWithdrawInput(e.target.value)}
-                placeholder={withdrawMethod === 'UPI' ? 'example@upi' : 'name@gmail.com ya @username'}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500"
-              />
-            </div>
-
-            {/* Submit & Cancel Buttons */}
-            <div className="flex space-x-2 pt-2">
-              <button
-                onClick={() => setShowWithdrawModal(false)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 text-gray-300 text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleWithdrawSubmit}
-                className="flex-1 py-2 rounded-xl bg-yellow-500 text-black text-sm font-bold"
-              >
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
-
-export default App;
