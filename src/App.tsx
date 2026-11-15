@@ -250,7 +250,8 @@ function App() {
                 onClick={() => setWithdrawMethod('REDEEM')}
                 className={`py-2 px-3 rounded-xl text-xs font-semibold border ${
                   withdrawMethod === 'REDEEM' 
-                    ? 'bg-yellow-500 text-black border-yellow-500'                     ? 'bg-yellow-500 text-black border-yellow-500' 
+                    ? 'bg-yellow-500 text-black border-yellow-500' 
+                                      ? 'bg-yellow-500 text-black border-yellow-500' 
                     : 'bg-zinc-800 text-gray-300 border-zinc-700'
                 }`}
               >
@@ -299,4 +300,4 @@ function App() {
 
 export default App;
 
-                  
+    
