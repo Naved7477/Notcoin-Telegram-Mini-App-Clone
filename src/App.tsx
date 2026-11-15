@@ -253,7 +253,7 @@ function App() {
                     ? 'bg-yellow-500 text-black border-yellow-500' 
                                       ? 'bg-yellow-500 text-black border-yellow-500' 
                     : 'bg-zinc-800 text-gray-300 border-zinc-700'
-                }`}
+                }
               >
                 🎮 Google Play Code
               </button>
