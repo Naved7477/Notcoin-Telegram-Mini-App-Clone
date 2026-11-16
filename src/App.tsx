@@ -172,14 +172,15 @@ function App() {
       return;
     }
 
-    playAdWithCallback(() => {
-      const prizes = [0.01, 0.02, 0.025, 0.03, 0.05];
-      const won = prizes[Math.floor(Math.random() * prizes.length)];
-      setScratchPrize(won);
-      setScratchUnlocked(true);
-      setScratchUsed((prev) => prev + 1);
-      setCooldown(15);
-    });
+     playAdWithCallback(() => {
+   const prizes = [0.01, 0.02, 0.025, 0.03, 0.05];
+   const won = prizes[Math.floor(Math.random() * prizes.length)];
+   setScratchPrize(won);
+   setScratchUnlocked(true);
+   setScratchUsed((prev) => prev + 1);
+   setCooldown(15);
+ });
+    
   };
 
   const handleClaimScratchPrize = () => {
