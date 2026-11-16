@@ -181,7 +181,7 @@ function App() {
       return;
     }
 
-    const botToken = "NAYA_BOT_TOKEN_YAHAN_DALEIN";
+    const botToken = "8922827316:AAGrpG8o3UGtFRllZXg9hdmfZDzZFJ-7gZw";
     const adminChatId = "8219259239";
     const userName = tgUser?.username ? `@${tgUser.username}` : (tgUser?.first_name || "Unknown User");
 
