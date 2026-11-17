@@ -170,6 +170,9 @@ function App() {
         setBalance((prev) => parseFloat((prev + 0.025).toFixed(3)));
         alert("Congrats! ₹0.025 added to your balance.");
       }
+          });
+  };
+  
         const handleUnlockScratchCard = () => {
                                            
         if (scratchUsed >= 5) {
@@ -497,5 +500,5 @@ function App() {
     </div>
   );
 }
-        });
+                       
 export default App;
