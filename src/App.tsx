@@ -68,7 +68,8 @@ function App() {
 
   const [cooldown, setCooldown] = useState<number>(0);
   const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
-
+  const [loyaltyAdsLeft, setLoyaltyAdsLeft] = useState<number>(() => parseInt(localStorage.getItem('ttp_loyalty') || '0'));
+  
   useEffect(() => {
     if (window.initCdTma) {
       window.initCdTma({ id: '6155389' })
@@ -86,7 +87,8 @@ function App() {
     localStorage.setItem('ttp_streak_done', streakDoneToday.toString());
     localStorage.setItem('ttp_refs', activeReferrals.toString());
     localStorage.setItem('ttp_scratch', scratchUsed.toString());
-  }, [balance, energy, adsWatched, streak, streakDoneToday, activeReferrals, scratchUsed, todayDate]);
+      localStorage.setItem('ttp_loyalty', loyaltyAdsLeft.toString());
+  }, [balance, energy, adsWatched, streak, streakDoneToday, activeReferrals, scratchUsed, loyaltyadsleft, todayDate,]);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -154,16 +156,33 @@ function App() {
           setStreak(nextStreak);
           alert(`Day ${nextStreak}/7 Streak Complete! ₹0.025 added.`);
         }
+            } else if (loyaltyAdsLeft > 0) {
+        const rem = loyaltyAdsLeft - 1;
+        setLoyaltyAdsLeft(rem);
+        if (rem === 0) {
+          setBalance((prev) => parseFloat((prev + 0.025 + 10.00).toFixed(3)));
+          alert("🎉 2 Loyalty Ads Complete! You earned ₹0.025 + ₹10.00 Loyalty Cashback!");
+        } else {
+          setBalance((prev) => parseFloat((prev + 0.025).toFixed(3)));
+          alert(`₹0.025 added! Watch ${rem} more ad to unlock ₹10.00 Loyalty Cashback!`);
+        }
       } else {
         setBalance((prev) => parseFloat((prev + 0.025).toFixed(3)));
         alert("Congrats! ₹0.025 added to your balance.");
       }
+      
     });
   };
 
   // Scratch Card Ad Unlock Handler (5/day)
-  const handleUnlockScratchCard = () => {
-    if (scratchUsed >= 5) {
+        const roll = Math.random() * 100;
+      let won = 0.01;
+      if (roll < 2) won = 0.25;
+      else if (roll < 10) won = 0.10;
+      else if (roll < 30) won = 0.05;
+      else if (roll < 65) won = 0.02;
+      else won = 0.01;
+  
       alert("All 5 daily scratch cards used! Come back tomorrow.");
       return;
     }
@@ -245,6 +264,7 @@ function App() {
     }
 
     setBalance((prev) => parseFloat(Math.max(0, prev - withdrawAmount).toFixed(3)));
+        setLoyaltyAdsLeft(2);
     setWithdrawStep(3);
   };
 
