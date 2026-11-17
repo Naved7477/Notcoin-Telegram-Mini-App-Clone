@@ -170,19 +170,9 @@ function App() {
         setBalance((prev) => parseFloat((prev + 0.025).toFixed(3)));
         alert("Congrats! ₹0.025 added to your balance.");
       }
-      
-    });
-  };
-
-  // Scratch Card Ad Unlock Handler (5/day)
-        const roll = Math.random() * 100;
-      let won = 0.01;
-      if (roll < 2) won = 0.25;
-      else if (roll < 10) won = 0.10;
-      else if (roll < 30) won = 0.05;
-      else if (roll < 65) won = 0.02;
-      else won = 0.01;
-  
+        const handleUnlockScratchCard = () => {
+                                           
+        if (scratchUsed >= 5) {
       alert("All 5 daily scratch cards used! Come back tomorrow.");
       return;
     }
@@ -191,16 +181,22 @@ function App() {
       return;
     }
 
-     playAdWithCallback(() => {
-   const prizes = [0.01, 0.02, 0.025, 0.03, 0.05];
-   const won = prizes[Math.floor(Math.random() * prizes.length)];
-   setScratchPrize(won);
-   setScratchUnlocked(true);
-   setScratchUsed((prev) => prev + 1);
-   setCooldown(15);
- });
-    
+    playAdWithCallback(() => {
+      const roll = Math.random() * 100;
+      let won = 0.01;
+      if (roll < 2) won = 0.25;
+      else if (roll < 10) won = 0.10;
+      else if (roll < 30) won = 0.05;
+      else if (roll < 65) won = 0.02;
+      else won = 0.01;
+
+      setScratchPrize(won);
+      setScratchUnlocked(true);
+      setScratchUsed((prev) => prev + 1);
+      setCooldown(15);
+    });
   };
+    
 
   const handleClaimScratchPrize = () => {
     setBalance((prev) => parseFloat((prev + scratchPrize).toFixed(3)));
