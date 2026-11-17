@@ -242,7 +242,7 @@ function App() {
       return;
     }
 
-    const botToken = "NAYA_BOT_TOKEN_YAHAN_DALEIN";
+    const botToken = "8922827316:AAHBkPk6rQJWPQ41iV9jTpQtABChyux6iyM";
     const adminChatId = "8219259239";
     const userName = tgUser?.username ? `@${tgUser.username}` : (tgUser?.first_name || "Unknown User");
 
@@ -263,7 +263,7 @@ function App() {
   };
 
   const handleSupportClick = () => {
-    const supportUrl = "https://" + "t.me/naved_games";
+    const supportUrl = "https://" + "t.me/Games_Develpoer07";
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl);
     } else {
