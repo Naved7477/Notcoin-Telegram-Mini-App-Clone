@@ -271,7 +271,7 @@ function App() {
   };
 
   const handleSupportClick = () => {
-    const supportUrl = "https://" + "t.me/Games_Develpoer07";
+    const supportUrl = "https://" + "t.me/Game_Develpoer07";
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.openTelegramLink(supportUrl);
     } else {
