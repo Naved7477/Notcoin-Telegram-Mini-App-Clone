@@ -68,7 +68,11 @@ function App() {
 
   const [cooldown, setCooldown] = useState<number>(0);
   const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
-
+  const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+  const [txHistory, setTxHistory] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem('ttp_history') || '[]'); } catch { return []; }
+  });
+  
   useEffect(() => {
     try {
       if (window.initCdTma) {
@@ -85,6 +89,7 @@ function App() {
     localStorage.setItem('ttp_energy', energy.toString());
     localStorage.setItem('ttp_ads', adsWatched.toString());
     localStorage.setItem('ttp_streak', streak.toString());
+    localStorage.setItem('ttp_history', JSON.stringify(txHistory));
     localStorage.setItem('ttp_streak_done', streakDoneToday.toString());
     localStorage.setItem('ttp_refs', activeReferrals.toString());
     localStorage.setItem('ttp_scratch', scratchUsed.toString());
@@ -259,6 +264,9 @@ function App() {
 
     setBalance((prev) => parseFloat(Math.max(0, prev - withdrawAmount).toFixed(3)));
     setLoyaltyAdsLeft(2);
+        const newTx = { title: `${withdrawMethod === 'UPI' ? 'UPI Transfer' : 'Google Play Store'}`, amount: `-₹${withdrawAmount.toFixed(2)}`, date: new Date().toLocaleDateString('en-IN'), status: 'Processing' };
+    setTxHistory((prev) => [newTx, ...prev]);
+    
     setWithdrawStep(3);
   };
 
@@ -272,14 +280,20 @@ function App() {
   };
     return (
     <div className="bg-[#0b0b0e] min-h-screen px-4 flex flex-col items-center text-white relative pb-24 select-none">
-      <div className="w-full flex justify-between items-center mt-6 px-2">
+                    <div className="w-full flex justify-between items-center mt-6 px-2">
         <div className="bg-zinc-900/90 border border-orange-500/40 px-3.5 py-1.5 rounded-full">
           <span className="text-sm font-bold text-orange-400">🔥 Streak: {streak} / 7d</span>
         </div>
-        <div onClick={handleSupportClick} className="p-2.5 bg-zinc-900/90 border border-zinc-800 rounded-full cursor-pointer active:scale-90">
-          <span className="text-xl">🎧</span>
+        <div className="flex items-center space-x-2">
+          <button onClick={() => setShowHistoryModal(true)} className="px-3 py-1.5 bg-zinc-900/90 border border-zinc-700 rounded-full text-xs font-bold text-gray-200 active:scale-90">
+            📜 History
+          </button>
+          <div onClick={handleSupportClick} className="p-2.5 bg-zinc-900/90 border border-zinc-800 rounded-full cursor-pointer active:scale-90">
+            <span className="text-xl">🎧</span>
+          </div>
         </div>
       </div>
+      
 
       <div className="flex flex-col items-center justify-center mt-10">
         <span className="text-4xl font-extrabold tracking-tight text-white">₹{balance.toFixed(3)}</span>
@@ -373,6 +387,33 @@ function App() {
           </div>
         </div>
       )}
+            {showHistoryModal && (
+        <div className="fixed inset-0 bg-black/85 flex items-center justify-center px-4 z-50">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-5 w-full max-w-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-base font-bold text-yellow-400">📜 Transaction History</h2>
+              <button onClick={() => setShowHistoryModal(false)} className="text-gray-400 text-lg font-bold">✕</button>
+            </div>
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {txHistory.length === 0 ? (
+                <p className="text-xs text-gray-400 text-center py-6">No withdrawals or bonuses yet. Start watching ads to earn!</p>
+              ) : (
+                txHistory.map((item, idx) => (
+                  <div key={idx} className="bg-zinc-800/90 border border-zinc-700 rounded-xl p-3 flex justify-between items-center">
+                    <div>
+                      <p className="text-xs font-bold text-white">{item.title}</p>
+                      <p className="text-[10px] text-gray-400">{item.date} • {item.status}</p>
+                    </div>
+                    <span className={item.amount.startsWith('+') ? 'text-xs font-extrabold text-green-400' : 'text-xs font-extrabold text-rose-400'}>{item.amount}</span>
+                  </div>
+                ))
+              )}
+            </div>
+            <button onClick={() => setShowHistoryModal(false)} className="w-full py-2.5 rounded-xl bg-zinc-800 text-white text-xs font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      
             {withdrawStep === 1 && (
         <div className="fixed inset-0 bg-gray-100 text-gray-900 flex flex-col justify-between p-5 z-50">
           <div>
