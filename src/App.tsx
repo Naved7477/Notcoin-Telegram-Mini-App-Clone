@@ -280,21 +280,20 @@ function App() {
   };
     return (
     <div className="bg-[#0b0b0e] min-h-screen px-4 flex flex-col items-center text-white relative pb-24 select-none">
-                    <div className="w-full flex justify-between items-center mt-6 px-2">
-        <div className="bg-zinc-900/90 border border-orange-500/40 px-3.5 py-1.5 rounded-full">
-          <span className="text-sm font-bold text-orange-400">🔥 Streak: {streak} / 7d</span>
+                          <div className="w-full flex justify-between items-center mt-5 px-1 gap-2">
+        <div className="bg-zinc-900/90 border border-orange-500/40 px-3 py-1.5 rounded-full whitespace-nowrap">
+          <span className="text-xs font-bold text-orange-400">🔥 {streak}/7d</span>
         </div>
         <div className="flex items-center space-x-2">
-          <button onClick={() => setShowHistoryModal(true)} className="px-3 py-1.5 bg-zinc-900/90 border border-zinc-700 rounded-full text-xs font-bold text-gray-200 active:scale-90">
+          <button onClick={() => setShowHistoryModal(true)} className="px-3 py-1.5 bg-zinc-900/90 border border-zinc-700 rounded-full text-xs font-bold text-gray-200 whitespace-nowrap active:scale-90">
             📜 History
           </button>
-          <div onClick={handleSupportClick} className="p-2.5 bg-zinc-900/90 border border-zinc-800 rounded-full cursor-pointer active:scale-90">
-            <span className="text-xl">🎧</span>
+          <div onClick={handleSupportClick} className="w-8 h-8 flex items-center justify-center bg-zinc-900/90 border border-zinc-800 rounded-full cursor-pointer active:scale-90">
+            <span className="text-base">🎧</span>
           </div>
         </div>
       </div>
       
-
       <div className="flex flex-col items-center justify-center mt-10">
         <span className="text-4xl font-extrabold tracking-tight text-white">₹{balance.toFixed(3)}</span>
         <div className="mt-3 bg-zinc-900 px-4 py-1.5 rounded-full border border-zinc-800 text-xs text-gray-300 flex items-center space-x-2">
