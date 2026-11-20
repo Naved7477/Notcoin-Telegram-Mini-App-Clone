@@ -118,20 +118,21 @@ function App() {
       }
     };
 
-    const tryOnClickA = () => {
-      if (window.onClickAShow) {
-        window.onClickAShow().then(onSuccess).catch(tryAdexium);
+        const tryMonetag = () => {
+      if (typeof window.show_12277677 === 'function') {
+        window.show_12277677().then(onSuccess).catch(tryAdexium);
       } else {
         tryAdexium();
       }
     };
 
-    if (typeof window.show_12277677 === 'function') {
-      window.show_12277677().then(onSuccess).catch(tryOnClickA);
+    if (window.onClickAShow) {
+      window.onClickAShow().then(onSuccess).catch(tryMonetag);
     } else {
-      tryOnClickA();
+      tryMonetag();
     }
   };
+  
 
   const handleWatchAdClick = () => {
     if (adsWatched >= 50) {
