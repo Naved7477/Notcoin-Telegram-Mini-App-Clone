@@ -118,20 +118,13 @@ function App() {
       }
     };
 
-        const tryMonetag = () => {
-      if (typeof window.show_12277677 === 'function') {
-        window.show_12277677().then(onSuccess).catch(tryAdexium);
-      } else {
-        tryAdexium();
-      }
-    };
-
-    if (window.onClickAShow) {
-      window.onClickAShow().then(onSuccess).catch(tryMonetag);
+          if (typeof window.show_12277677 === 'function') {
+      window.show_12277677().then(onSuccess).catch(tryAdexium);
     } else {
-      tryMonetag();
+      tryAdexium();
     }
   };
+  
   
 
   const handleWatchAdClick = () => {
