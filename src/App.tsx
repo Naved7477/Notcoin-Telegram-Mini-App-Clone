@@ -31,11 +31,15 @@ function App() {
     return !isNaN(saved) ? saved : 1000;
   });
 
-  const [streak, setStreak] = useState<number>(() => {
+    const [streak, setStreak] = useState<number>(() => {
     const saved = parseInt(localStorage.getItem('ttp_streak') || '0');
+    const lastStreakTime = parseInt(localStorage.getItem('ttp_last_streak_ts') || '0');
+    if (lastStreakTime > 0 && Date.now() - lastStreakTime > 3 * 24 * 60 * 60 * 1000) {
+      return 0;
+    }
     return !isNaN(saved) ? saved : 0;
   });
-
+  
   const [streakDoneToday, setStreakDoneToday] = useState<boolean>(() => {
     if (localStorage.getItem('ttp_date') !== todayDate) return false;
     return localStorage.getItem('ttp_streak_done') === 'true';
@@ -145,6 +149,7 @@ function App() {
       if (updatedAds === 50 && !streakDoneToday) {
         const nextStreak = streak + 1;
         setStreakDoneToday(true);
+                localStorage.setItem('ttp_last_streak_ts', Date.now().toString());
         if (nextStreak >= 7) {
           setBalance((prev) => parseFloat((prev + 0.025 + 3.00).toFixed(3)));
           setStreak(0);
