@@ -99,7 +99,33 @@ function App() {
     localStorage.setItem('ttp_scratch', scratchUsed.toString());
     localStorage.setItem('ttp_loyalty', loyaltyAdsLeft.toString());
   }, [balance, energy, adsWatched, streak, streakDoneToday, activeReferrals, scratchUsed, loyaltyAdsLeft, todayDate]);
+  useEffect(() => {
+    const uid = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+    if (!uid) return;
+    const ttpDb = "https://" + "taptopaisa-db-default-rtdb.asia-southeast1.firebasedatabase.app";
+    const bpDb = "https://" + "block-paisa-default-rtdb.asia-southeast1.firebasedatabase.app";
 
+    fetch(`${ttpDb}/users/${uid}.json`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ balance, streak, streak7Done: streak >= 7 })
+    }).catch(() => {});
+
+    if (localStorage.getItem('ttp_combo5_claimed') !== 'yes') {
+      fetch(`${bpDb}/users/${uid}.json`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.streak5Paid) {
+            localStorage.setItem('ttp_combo5_claimed', 'yes');
+            setBalance((prev) => parseFloat((prev + 5).toFixed(3)));
+            setTxHistory((prev) => [{ title: 'Block Paisa 7d Combo', amount: '+₹5.00', date: new Date().toLocaleDateString('en-IN'), status: 'Credited' }, ...prev]);
+            alert('🎉 Cross-Game Combo Bonus! +₹5.00 has been added to your Tap To Paisa wallet!');
+          }
+        })
+        .catch(() => {});
+    }
+  }, [streak]);
+  
   useEffect(() => {
     if (cooldown > 0) {
       const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
