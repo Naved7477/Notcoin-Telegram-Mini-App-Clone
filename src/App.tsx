@@ -332,10 +332,15 @@ function App() {
             <span className="text-xl">👥</span>
             <span className="text-[11px] font-medium">Invite ({activeReferrals}/2)</span>
           </button>
-          <button onClick={handleWithdrawOpen} className="flex flex-col items-center space-y-1 text-green-400 active:scale-95">
-            <span className="text-xl">💰</span>
-            <span className="text-[11px] font-medium">Withdraw</span>
+                    <button onClick={handleWithdrawOpen} className="flex flex-col items-center space-y-1 text-amber-400 active:scale-95">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+              <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+              <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+            </svg>
+            <span className="text-[11px] font-medium">Wallet</span>
           </button>
+          
         </div>
       </div>
 
