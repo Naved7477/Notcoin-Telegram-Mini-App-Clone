@@ -13,18 +13,21 @@ function sendTelegram(token, payload) {
           "Content-Length": Buffer.byteLength(data),
         },
       },
-            (res) => {
+      (res) => {
         let body = "";
-        res.on("data", (chunk) => (body += chunk));
+        res.on("data", (chunk) => {
+          body += chunk;
+        });
         res.on("end", () => {
           console.log("TG_RESP:", body);
           resolve();
         });
-            }
-      
       }
     );
-    req.on("error", resolve);
+    req.on("error", (e) => {
+      console.log("TG_ERR:", e);
+      resolve();
+    });
     req.write(data);
     req.end();
   });
