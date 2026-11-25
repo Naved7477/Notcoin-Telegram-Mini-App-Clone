@@ -1,5 +1,7 @@
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(200).send('Tap To Paisa Bot is running!');
+module.exports = async function (req, res) {
+  if (req.method !== 'POST') {
+    return res.status(200).send('Tap To Paisa Bot is running!');
+  }
 
   const token = "8922827316:AAHBkPk6rQJWPQ41iV9jTpQtABChyux6iyM";
   const webAppUrl = "https://" + "notcoin-telegram-mini-app-clone-omega.vercel.app";
@@ -73,4 +75,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ ok: true });
-}
+};
