@@ -13,9 +13,15 @@ function sendTelegram(token, payload) {
           "Content-Length": Buffer.byteLength(data),
         },
       },
-      (res) => {
-        res.on("data", () => {});
-        res.on("end", resolve);
+            (res) => {
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          console.log("TG_RESP:", body);
+          resolve();
+        });
+            }
+      
       }
     );
     req.on("error", resolve);
