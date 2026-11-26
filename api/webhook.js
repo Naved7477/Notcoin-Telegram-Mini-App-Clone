@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(200).send("Bot is running!");
 
-    const token = "8922827316:AAHBkPk6rQJWPQ41iV9jTpQtABChyux6iyM";
+    const token = process.env.BOT_TOKEN;
     const webAppUrl = "https://" + "notcoin-telegram-mini-app-clone-omega.vercel.app";
     const update = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
 
@@ -42,7 +42,8 @@ export default async function handler(req, res) {
           [{ text: "📜 Rules" }, { text: "👥 Refer and Earn" }],
           [{ text: "🎧 Customer Support" }]
         ],
-        resize_keyboard: true
+        resize_keyboard: true,
+        is_persistent: true
       };
 
       if (text.startsWith("/start")) {
