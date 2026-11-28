@@ -297,5 +297,219 @@ export default function App() {
         : "✅ ₹50 Withdrawal Submitted! Processing takes 48–72 hours."
     );
   };
+  const inviteLink = `https://t.me{BOT_USERNAME}?start=${userId}`;
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-3 animate-bounce">🪙</div>
+          <p className="text-amber-400 font-bold">Loading Tap To Paisa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between max-w-md mx-auto pb-20">
+      <div className="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-slate-400">Welcome, {userName}</p>
+          <h1 className="text-2xl font-extrabold text-amber-400">₹{balance.toFixed(3)}</h1>
+        </div>
+        <div className="text-right">
+          <span className="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full font-semibold">
+            🔥 Streak: {streakDays}/7d
+          </span>
+        </div>
+      </div>
+
+      <div className="p-4 flex-1 flex flex-col justify-center">
+        {activeTab === "home" && (
+          <div className="flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <p className="text-sm text-slate-300">Tap Coin to Earn (+₹0.001/tap)</p>
+              <p className="text-xs text-amber-400 font-semibold mt-1">⚡ Energy: {energy} / 1,000</p>
+            </div>
+            <div className="relative my-4">
+              <button
+                onClick={handleTap}
+                className="w-52 h-52 rounded-full bg-gradient-to-b from-amber-300 via-amber-500 to-amber-700 shadow-[0_0_45px_rgba(245,158,11,0.45)] border-4 border-amber-200 flex items-center justify-center active:scale-95 transition-transform select-none"
+              >
+                <span className="text-7xl">🪙</span>
+              </button>
+              {tapPopups.map((p) => (
+                <span
+                  key={p.id}
+                  style={{ left: p.x, top: p.y }}
+                  className="pointer-events-none absolute text-amber-300 font-extrabold text-sm animate-ping"
+                >
+                  +₹0.001
+                </span>
+              ))}
+            </div>
+
+            <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-3 mt-4 text-xs text-slate-300 flex justify-between">
+              <span>📺 Ads Today: {adsToday}/50</span>
+              <span>🎁 Scratch Left: {scratchesLeft}/5</span>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "tasks" && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold text-amber-400">Daily Earning Tasks</h2>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold">📺 Watch Short Ad</h3>
+                <p className="text-xs text-slate-400">+₹0.015 per ad ({adsToday}/50 today)</p>
+              </div>
+              <button
+                disabled={adLoading || adsToday >= 50}
+                onClick={handleWatchAd}
+                className="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-700 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm"
+              >
+                {adLoading ? "Loading..." : "+₹0.015"}
+              </button>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold">🎁 Mystery Scratch Card</h3>
+                <p className="text-xs text-slate-400">Win up to ₹0.25 ({scratchesLeft}/5 left)</p>
+              </div>
+              <button
+                disabled={adLoading || scratchesLeft <= 0}
+                onClick={handleScratchCard}
+                className="bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-700 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm"
+              >
+                {adLoading ? "Loading..." : "Scratch"}
+              </button>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <h3 className="font-bold text-amber-300">🧱 Cross-Game Combo (+₹5.00)</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Play <b>Block Paisa</b> for 7 days and get +₹5.00 auto-added to your wallet!
+              </p>
+              <a
+                href={`https://t.me{userId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block mt-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl"
+              >
+                Play Block Paisa ↗
+              </a>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "invite" && (
+          <div className="space-y-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <h2 className="text-lg font-bold text-amber-400">👥 Invite & Earn ₹3.00</h2>
+              <p className="text-xs text-slate-300 mt-1">
+                Earn <b>₹3.00 Bonus</b> for every friend who joins via your link and completes a 7-Day Streak!
+              </p>
+              <div className="mt-3 p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-xs break-all text-amber-300">
+                {inviteLink}
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(inviteLink);
+                  alert("✅ Invite link copied!");
+                }}
+                className="w-full mt-3 bg-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-sm"
+              >
+                Copy Invite Link
+              </button>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex justify-between items-center">
+              <span className="text-sm text-slate-300">Active Referrals</span>
+              <span className="text-lg font-extrabold text-emerald-400">{referrals} / 2</span>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "wallet" && (
+          <div className="space-y-3">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <h2 className="text-lg font-bold text-amber-400">💸 Withdraw Earnings</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Min Withdrawal: <b>₹50.00</b> • Requires <b>2 Active Referrals</b> • +₹10 Loyalty Cashback after 1st payout!
+              </p>
+
+              <div className="flex gap-2 mt-3">
+                {(["UPI", "Google Play"] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setPayoutMethod(m)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border ${
+                      payoutMethod === m
+                        ? "bg-amber-500 text-slate-950 border-amber-400"
+                        : "bg-slate-950 text-slate-300 border-slate-800"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                value={upiId}
+                onChange={(e) => setUpiId(e.target.value)}
+                placeholder={payoutMethod === "UPI" ? "Enter UPI ID (e.g. name@upi)" : "Enter Gmail for Play Code"}
+                className="w-full mt-3 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white"
+              />
+
+              <button
+                onClick={handleWithdraw}
+                className="w-full mt-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-sm"
+              >
+                Withdraw ₹50.00
+              </button>
+
+              {withdrawMsg && <p className="mt-3 text-xs text-amber-300 font-semibold">{withdrawMsg}</p>}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-900 border-t border-slate-800 grid grid-cols-4 py-2 text-xs">
+        <button
+          onClick={() => setActiveTab("home")}
+          className={`flex flex-col items-center ${activeTab === "home" ? "text-amber-400 font-bold" : "text-slate-400"}`}
+        >
+          <span>🪙</span>
+          <span>Tap</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("tasks")}
+          className={`flex flex-col items-center ${activeTab === "tasks" ? "text-amber-400 font-bold" : "text-slate-400"}`}
+        >
+          <span>📺</span>
+          <span>Tasks</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("invite")}
+          className={`flex flex-col items-center ${activeTab === "invite" ? "text-amber-400 font-bold" : "text-slate-400"}`}
+        >
+          <span>👥</span>
+          <span>Invite</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("wallet")}
+          className={`flex flex-col items-center ${activeTab === "wallet" ? "text-amber-400 font-bold" : "text-slate-400"}`}
+        >
+          <span>💸</span>
+          <span>Wallet</span>
+        </button>
+      </div>
+    </div>
+  );
+}
 
       
