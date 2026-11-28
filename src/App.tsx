@@ -268,18 +268,45 @@ export default function App() {
     });
   };
 
-  const handleSponsorOffer = () => {
-    if (offersLeft <= 0 || offerTimer > 0) return;
+    const handleSponsorOffer = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (offersLeft <= 0 || offerTimer > 0) {
+      e.preventDefault();
+      return;
+    }
+
+    // Check if Monetag script is blocked by AdBlocker / Private DNS
+    if (typeof window.show_12277677 !== "function") {
+      e.preventDefault();
+      alert("⚠️ Sponsor ad could not load! Please turn off AdBlocker / Private DNS or check your internet.");
+      return;
+    }
 
     let sec = 15;
+    let leftApp = false;
     setOfferTimer(sec);
-        const interval = setInterval(async () => {
+
+    const onBlur = () => {
+      leftApp = true;
+    };
+    window.addEventListener("blur", onBlur);
+
+    const interval = setInterval(async () => {
       sec -= 1;
       setOfferTimer(sec);
+
       if (sec <= 0) {
         clearInterval(interval);
+        window.removeEventListener("blur", onBlur);
+
+        // Sirf tabhi count & reward milega jab user sach mein sponsor page par gaya ho
+        if (!leftApp && document.visibilityState === "visible") {
+          setOfferTimer(0);
+          alert("⚠️ Sponsor page was not visited! Please open the offer and stay for 15 seconds.");
+          return;
+        }
+
         const nextOffers = offersLeft - 1;
-                const nextBalance = Number((balance + 0.15).toFixed(3));
+        const nextBalance = Number((balance + 0.15).toFixed(3));
         const nextHist = addHistory("Sponsor Offer Bonus", "+₹0.15", historyList);
 
         setOffersLeft(nextOffers);
@@ -295,6 +322,7 @@ export default function App() {
       }
     }, 1000);
   };
+        
 
   const handleScratchCard = async () => {
     if (scratchesLeft <= 0) {
@@ -409,7 +437,7 @@ export default function App() {
           </button>
 
           <a
-            href="https://t.me"
+            href="https://t.me/Game_Developer07"
             target="_blank"
             rel="noreferrer"
             className="w-9 h-9 rounded-full bg-[#18191e] border border-white/10 hover:border-amber-400/50 flex items-center justify-center text-gray-300"
@@ -437,7 +465,7 @@ export default function App() {
               href={DIRECT_LINK_URL}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={handleSponsorOffer}
+              onClick={(e) => handleSponsorOffer(e)}
               className="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/50 hover:bg-amber-500/25 rounded-full px-3.5 py-1.5 text-xs font-bold text-amber-300"
             >
               <span>🎯</span>
