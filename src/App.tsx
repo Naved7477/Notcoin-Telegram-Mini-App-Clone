@@ -6,6 +6,7 @@ declare global {
       WebApp?: {
         ready: () => void;
         expand: () => void;
+        openLink?: (url: string) => void;
         initDataUnsafe?: {
           user?: {
             id?: number;
@@ -21,6 +22,7 @@ declare global {
 }
 
 const DB_BASE = "https://" + "taptopaisa-db-default-rtdb.asia-southeast1.firebasedatabase.app";
+const DIRECT_LINK_URL = "https://" + "://uplcm.com";
 const BOT_USERNAME = "TapToPaisa_Official_bot";
 
 interface HistoryItem {
@@ -37,6 +39,8 @@ export default function App() {
   const [energy, setEnergy] = useState<number>(1000);
   const [adsToday, setAdsToday] = useState<number>(0);
   const [scratchesLeft, setScratchesLeft] = useState<number>(5);
+  const [offersLeft, setOffersLeft] = useState<number>(3);
+  const [offerTimer, setOfferTimer] = useState<number>(0);
   const [streakDays, setStreakDays] = useState<number>(0);
   const [streakClaimed, setStreakClaimed] = useState<boolean>(false);
   const [blockBonusClaimed, setBlockBonusClaimed] = useState<boolean>(false);
@@ -52,7 +56,7 @@ export default function App() {
   const [payoutMethod, setPayoutMethod] = useState<"UPI" | "Google Play">("UPI");
   const [withdrawMsg, setWithdrawMsg] = useState<string>("");
 
-  const todayStr = new Date().toISOString().split("T");
+  const todayStr = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
@@ -102,10 +106,12 @@ export default function App() {
           setEnergy(typeof data.energy === "number" ? data.energy : 1000);
           setAdsToday(data.adsToday || 0);
           setScratchesLeft(typeof data.scratchesLeft === "number" ? data.scratchesLeft : 5);
+          setOffersLeft(typeof data.offersLeft === "number" ? data.offersLeft : 3);
         } else {
           setEnergy(1000);
           setAdsToday(0);
           setScratchesLeft(5);
+          setOffersLeft(3);
         }
 
         // Cross-game Block Paisa 7-day auto-sync
@@ -142,6 +148,7 @@ export default function App() {
           energy: 1000,
           adsToday: 0,
           scratchesLeft: 5,
+          offersLeft: 3,
           streakDays: 0,
           streakClaimed: false,
           blockBonusClaimed: false,
@@ -261,6 +268,40 @@ export default function App() {
     });
   };
 
+  const handleSponsorOffer = () => {
+    if (offersLeft <= 0 || offerTimer > 0) return;
+
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(DIRECT_LINK_URL);
+    } else {
+      window.open(DIRECT_LINK_URL, "_blank", "noopener,noreferrer");
+    }
+
+    let sec = 15;
+    setOfferTimer(sec);
+    const interval = setInterval(async () => {
+      sec -= 1;
+      setOfferTimer(sec);
+      if (sec <= 0) {
+        clearInterval(interval);
+        const nextOffers = offersLeft - 1;
+                const nextBalance = Number((balance + 0.15).toFixed(3));
+        const nextHist = addHistory("Sponsor Offer Bonus", "+₹0.15", historyList);
+
+        setOffersLeft(nextOffers);
+        setBalance(nextBalance);
+        setHistoryList(nextHist);
+        alert("🎯 Sponsor Offer Completed! +₹0.15 added to your wallet!");
+
+        await syncToFirebase({
+          balance: nextBalance,
+          offersLeft: nextOffers,
+          history: nextHist
+        });
+      }
+    }, 1000);
+  };
+
   const handleScratchCard = async () => {
     if (scratchesLeft <= 0) {
       alert("🎁 All 5 daily scratch cards used! Come back tomorrow.");
@@ -289,7 +330,7 @@ export default function App() {
   const handleWithdraw = async () => {
     setWithdrawMsg("");
     if (balance < 50) {
-            setWithdrawMsg("❌ Insufficient balance! Minimum withdrawal is ₹50.00.");
+      setWithdrawMsg("❌ Insufficient balance! Minimum withdrawal is ₹50.00.");
       return;
     }
     if (referrals < 2) {
@@ -297,7 +338,7 @@ export default function App() {
       return;
     }
     if (!upiId.trim()) {
-      setWithdrawMsg("❌ Please enter your UPI ID or Email for Google Play code!");
+      setWithdrawMsg("❌ Please enter your UPI ID, Email, or Telegram @username!");
       return;
     }
 
@@ -385,14 +426,30 @@ export default function App() {
         </div>
       </div>
 
-      {/* Balance & Ads Counter */}
-      <div className="text-center mt-4">
+      {/* Balance, Ads Counter & Sponsor Offer Pill */}
+      <div className="text-center mt-3">
         <h1 className="text-5xl font-extrabold tracking-tight text-white">
           ₹{balance.toFixed(3)}
         </h1>
-        <div className="inline-flex items-center gap-2 bg-[#18191e] border border-white/10 rounded-full px-4 py-1.5 mt-3 text-xs font-semibold text-gray-300">
-          <span>📺</span>
-          <span>Ads Today: {adsToday} / 50</span>
+
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
+          <div className="inline-flex items-center gap-1.5 bg-[#18191e] border border-white/10 rounded-full px-3.5 py-1.5 text-xs font-semibold text-gray-300">
+            <span>📺</span>
+            <span>Ads Today: {adsToday} / 50</span>
+          </div>
+
+          <button
+            disabled={offersLeft <= 0 || offerTimer > 0}
+            onClick={handleSponsorOffer}
+            className="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/50 hover:bg-amber-500/25 disabled:opacity-50 rounded-full px-3.5 py-1.5 text-xs font-bold text-amber-300"
+          >
+            <span>🎯</span>
+            <span>
+              {offerTimer > 0
+                ? `Explore ${offerTimer}s...`
+                : `Sponsor Offer +₹0.15 (${offersLeft}/3)`}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -500,7 +557,7 @@ export default function App() {
             </div>
             <div className="max-h-64 overflow-y-auto space-y-2 text-xs">
               {historyList.length === 0 ? (
-                <p className="text-gray-400 text-center py-6">No recent transactions yet.</p>
+                  <p className="text-gray-400 text-center py-6">No recent transactions yet.</p>
               ) : (
                 historyList.map((item) => (
                   <div
@@ -545,7 +602,7 @@ export default function App() {
             <button
               onClick={() => {
                 navigator.clipboard.writeText(inviteLink);
-                                alert("✅ Invite link copied!");
+                alert("✅ Invite link copied!");
               }}
               className="w-full mt-3 bg-amber-500 text-black font-bold py-2.5 rounded-xl text-sm"
             >
@@ -603,7 +660,11 @@ export default function App() {
               type="text"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
-              placeholder={payoutMethod === "UPI" ? "Enter UPI ID (e.g. name@upi)" : "Enter Gmail for Play Code"}
+              placeholder={
+                payoutMethod === "UPI"
+                  ? "Enter UPI ID (e.g. name@upi)"
+                  : "Enter Email or Telegram @username"
+              }
               className="w-full mt-3 bg-[#0c0d10] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white"
             />
 
@@ -621,6 +682,3 @@ export default function App() {
     </div>
   );
 }
-
-      
-      
