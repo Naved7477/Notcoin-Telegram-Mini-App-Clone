@@ -271,15 +271,9 @@ export default function App() {
   const handleSponsorOffer = () => {
     if (offersLeft <= 0 || offerTimer > 0) return;
 
-    if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(DIRECT_LINK_URL);
-    } else {
-      window.open(DIRECT_LINK_URL, "_blank", "noopener,noreferrer");
-    }
-
     let sec = 15;
     setOfferTimer(sec);
-    const interval = setInterval(async () => {
+        const interval = setInterval(async () => {
       sec -= 1;
       setOfferTimer(sec);
       if (sec <= 0) {
@@ -438,18 +432,27 @@ export default function App() {
             <span>Ads Today: {adsToday} / 50</span>
           </div>
 
-          <button
-            disabled={offersLeft <= 0 || offerTimer > 0}
-            onClick={handleSponsorOffer}
-            className="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/50 hover:bg-amber-500/25 disabled:opacity-50 rounded-full px-3.5 py-1.5 text-xs font-bold text-amber-300"
-          >
-            <span>🎯</span>
-            <span>
-              {offerTimer > 0
-                ? `Explore ${offerTimer}s...`
-                : `Sponsor Offer +₹0.15 (${offersLeft}/3)`}
-            </span>
-          </button>
+                {offersLeft > 0 && offerTimer === 0 ? (
+            <a
+              href={DIRECT_LINK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleSponsorOffer}
+              className="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/50 hover:bg-amber-500/25 rounded-full px-3.5 py-1.5 text-xs font-bold text-amber-300"
+            >
+              <span>🎯</span>
+              <span>Sponsor Offer +₹0.15 ({offersLeft}/3)</span>
+            </a>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 opacity-60 rounded-full px-3.5 py-1.5 text-xs font-bold text-amber-300">
+              <span>🎯</span>
+              <span>
+                {offerTimer > 0
+                  ? `Explore ${offerTimer}s...`
+                  : "Sponsor Offer Done (0/3)"}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
