@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   try {
     if (req.method !== "POST") return res.status(200).send("Bot is running!");
 
-    const token = process.env.BOT_TOKEN || "".trim();
+    const token = (process.env.BOT_TOKEN || "").trim();
     const webAppUrl = "https://" + "notcoin-telegram-mini-app-clone-omega.vercel.app";
     const update = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
 
@@ -47,9 +47,9 @@ export default async function handler(req, res) {
       };
 
       if (text.startsWith("/start")) {
-        replyText = "💰 <b>Welcome to Tap To Paisa Official!</b>\n\n🪙 Tap coins, watch short ads, unlock 5 daily mystery scratch cards, and earn real rewards!\n💵 <b>₹20 Welcome Bonus + ₹10 Loyalty Cashback</b>\n\n👇 Tap <b>Play Game</b> below to start earning now!\n\n🧱 <b>More Earning Game (Block Paisa):</b>\nhttps://" + "t.me/BlockPaisaGame_bot?start=" + chatId;
+        replyText = "💰 <b>Welcome to Tap To Paisa Official!</b>\n\n🪙 Tap coins, watch short ads, unlock 5 daily mystery scratch cards, and earn real rewards!\n💵 <b>₹15 Welcome Bonus + ₹10 Loyalty Cashback</b>\n\n👇 Tap <b>Play Game</b> below to start earning now!\n\n🧱 <b>More Earning Game (Block Paisa):</b>\nhttps://" + "t.me/BlockPaisaGame_bot?start=" + chatId;
       } else if (text === "📜 Rules") {
-        replyText = "📜 <b>Tap To Paisa — Official Rules</b>\n\n• ⚡ <b>Daily Tap:</b> 1,000 free energy daily (+₹0.001/tap)\n• 📺 <b>Watch Ads:</b> Up to 50 ads daily (+₹0.025/ad)\n• 🎁 <b>Scratch Cards:</b> 5 daily mystery cards (Up to ₹0.25!)\n• 🔥 <b>7-Day Streak:</b> Complete 50 ads daily for 7 days (2-day grace chance) = <b>₹3.00 Bonus</b>\n• 🧱 <b>Cross-Game Combo Bonus:</b> Play our 2nd game (<b>Block Paisa</b>) for 7 days and get <b>₹5.00 Bonus in BOTH games</b>! 🎉\n• 💸 <b>Withdrawal:</b> Min ₹50 via UPI or Google Play Store (requires 2 active referrals) + <b>₹10 Loyalty Cashback</b> after payout!";
+        replyText = "📜 <b>Tap To Paisa — Official Rules</b>\n\n• ⚡ <b>Daily Tap:</b> 1,000 free energy daily (+₹0.001/tap)\n• 📺 <b>Watch Ads:</b> Up to 50 ads daily (+₹0.015/ad)\n• 🎁 <b>Scratch Cards:</b> 5 daily mystery cards (Up to ₹0.25!)\n• 🔥 <b>7-Day Streak:</b> Complete 50 ads daily for 7 days (2-day grace chance) = <b>₹3.00 Bonus</b>\n• 🧱 <b>Cross-Game Combo Bonus:</b> Play our 2nd game (<b>Block Paisa</b>) for 7 days and get <b>₹5.00 Bonus in BOTH games</b>! 🎉\n• 💸 <b>Withdrawal:</b> Min ₹50 via UPI or Google Play Store (requires 2 active referrals) + <b>₹10 Loyalty Cashback</b> after payout!";
       } else if (text === "👥 Refer and Earn") {
         replyText = "👥 <b>Squad Invite Bonus!</b>\n\nEarn <b>₹3.00 Bonus</b> for every friend who joins via your link and completes a 7-Day Streak:\n<code>https://" + "t.me/TapToPaisa_Official_bot?start=" + chatId + "</code>";
       } else if (text === "🎧 Customer Support") {
